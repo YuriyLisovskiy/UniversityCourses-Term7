@@ -3,6 +3,9 @@
 
 #include "src/compression/rle.h"
 
+const std::string IMAGES = "../images/";
+const std::string OUTPUT = "../output/";
+
 void prepare()
 {
 	const char* output_folder = "../output";
@@ -18,19 +21,16 @@ void prepare()
 
 void bmp_task()
 {
-	std::string images = "../images/";
-	std::string output = "../output/";
-	std::string input_bmp_file_name = "uncompressed-24-bit.bmp";
-	std::string output_bmp_file_name = "compressed.bmp";
+	std::string base_file_name = "compressed.bmp";
 
 	rle::bmp_compress(
-		(images + input_bmp_file_name),
-		(output + output_bmp_file_name)
+		(IMAGES + "un" + base_file_name),
+		(OUTPUT + base_file_name)
 	);
 
 	rle::bmp_decompress(
-		(output + output_bmp_file_name),
-		(output + "un" + output_bmp_file_name)
+		(OUTPUT + base_file_name),
+		(OUTPUT + "un" + base_file_name)
 	);
 }
 
