@@ -1,5 +1,5 @@
-#ifndef UNI7_RLE_H
-#define UNI7_RLE_H
+#ifndef IMAGE_PROC_AND_MULT_RLE_H
+#define IMAGE_PROC_AND_MULT_RLE_H
 
 #include <cstdio>
 #include <cstdlib>
@@ -74,4 +74,4 @@ extern void bmp_decompress(const std::string& input_file, const std::string& out
 
 __RLE_END__
 
-#endif // UNI7_RLE_H
+#endif // IMAGE_PROC_AND_MULT_RLE_H
