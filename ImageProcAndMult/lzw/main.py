@@ -3,44 +3,77 @@ from tifffile import TiffFile
 import numpy as np
 
 from lzw import lzw
+from tracker.time_tracker import TimeTracker
+
+
+IMAGES_ROOT = 'set_in_local_settings'
+OUTPUT_ROOT = 'set_in_local_settings'
+
+IMAGE_NAME = 'images_5'
+
+
+try:
+	from local_settings import IMAGES_ROOT, OUTPUT_ROOT
+except ImportError as e:
+	raise e
 
 
 def tiff_compress():
-	root = '~/Projects/UniversityCourses-Term7/ImageProcAndMult/rle/'
+	input_file = IMAGES_ROOT + '{}.tiff'.format(IMAGE_NAME)
+	output_file = OUTPUT_ROOT + '{}_compressed.tiff'.format(IMAGE_NAME)
 
-	input_file = root + 'images/uncompressed.tiff'
-	output_file = root + 'output/compressed.tiff'
+	t = TimeTracker()
 
-	with TiffFile(input_file) as tif_file:
-		uncompressed = np.array(tif_file.asarray()).flatten()
+	t.start('reading')
+	tif_file = TiffFile(input_file)
+	image_matrix = tif_file.asarray()
+	t.track('reading')
 
-		compressed = lzw.compress(uncompressed.tolist())
+	# print(image_matrix)
 
-		print(len(compressed))
+	t.start('compression')
+	compressed = lzw.compress(image_matrix.flatten().tolist())
+	t.track('compression')
 
-		tiff.imsave(output_file, np.array(compressed))
+	t.start('writing')
+	tiff.imsave(output_file, np.array(compressed))
+	t.track('writing')
+
+	print(t)
+
+	return image_matrix.shape
 
 
-def tiff_decompress():
-	root = '~/Projects/UniversityCourses-Term7/ImageProcAndMult/rle/'
+def tiff_decompress(dimensions):
+	input_file = OUTPUT_ROOT + '{}_compressed.tiff'.format(IMAGE_NAME)
+	output_file = OUTPUT_ROOT + '{}_uncompressed.tiff'.format(IMAGE_NAME)
 
-	input_file = root + 'output/compressed.tiff'
-	output_file = root + 'output/uncompressed.tiff'
+	tif_file = TiffFile(input_file)
+	compressed = np.array(tif_file.asarray()).flatten()
+	decompressed = np.array(lzw.decompress(compressed.tolist()))
 
-	with TiffFile(input_file) as tif_file:
-		compressed = np.array(tif_file.asarray()).flatten()
+	# print(decompressed.reshape(dimensions))
 
-		decompressed = np.array(lzw.decompress(compressed.tolist()))
+	tiff.imwrite(output_file, decompressed.reshape(dimensions))
 
-		tiff.imsave(output_file, decompressed.reshape((1200, 1200, 3)))
+
+def test():
+	to_compress = [241, 16, 72, 10, 10, 10, 10, 10, 241, 16, 72, 13, 5]
+
+	compressed = lzw.compress(to_compress)
+	print(compressed)
+
+	decompressed = lzw.decompress(compressed)
+	print(decompressed)
 
 
 def main():
-	# print(lzw.compress('hello,worlddddddd'))
 
-	# tiff_compress()
+	dimensions = tiff_compress()
+	print(dimensions)
+	tiff_decompress(dimensions)
 
-	tiff_decompress()
+	# test()
 
 
 if __name__ == '__main__':
