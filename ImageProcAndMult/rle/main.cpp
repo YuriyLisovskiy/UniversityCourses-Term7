@@ -3,12 +3,12 @@
 
 #include "src/compression/rle.h"
 
-const std::string IMAGES = "../images/";
-const std::string OUTPUT = "../output/";
+const std::string IMAGES = "../../images/";
+const std::string OUTPUT = "../../output/";
 
 void prepare()
 {
-	const char* output_folder = "../output";
+	const char* output_folder = "../../output";
 	if (mkdir(output_folder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1)
 	{
 		if (errno != EEXIST)
@@ -21,16 +21,16 @@ void prepare()
 
 void bmp_task()
 {
-	std::string base_file_name = "compressed.bmp";
+	std::string base_file_name = "images_5";
 
 	rle::bmp_compress(
-		(IMAGES + "un" + base_file_name),
-		(OUTPUT + base_file_name)
+		(IMAGES + base_file_name + ".bmp"),
+		(OUTPUT + base_file_name + "_compressed.bmp")
 	);
 
 	rle::bmp_decompress(
-		(OUTPUT + base_file_name),
-		(OUTPUT + "un" + base_file_name)
+		(OUTPUT + base_file_name + "_compressed.bmp"),
+		(OUTPUT + base_file_name + "_uncompressed.bmp")
 	);
 }
 
