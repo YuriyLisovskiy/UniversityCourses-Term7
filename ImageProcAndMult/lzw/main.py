@@ -6,7 +6,7 @@ from lzw import lzw
 
 
 def tiff_compress():
-	root = '~/Projects/UniversityCourses-Term7/ImageProcAndMult/'
+	root = '~/Projects/UniversityCourses-Term7/ImageProcAndMult/rle/'
 
 	input_file = root + 'images/uncompressed.tiff'
 	output_file = root + 'output/compressed.tiff'
@@ -22,7 +22,7 @@ def tiff_compress():
 
 
 def tiff_decompress():
-	root = '~/Projects/UniversityCourses-Term7/ImageProcAndMult/'
+	root = '~/Projects/UniversityCourses-Term7/ImageProcAndMult/rle/'
 
 	input_file = root + 'output/compressed.tiff'
 	output_file = root + 'output/uncompressed.tiff'

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(PACKAGE_NAME "ImageProcAndMult")
+set(PACKAGE_NAME "rle")
 
 # set(CMAKE_CXX_FLAGS "-pthread")
 
