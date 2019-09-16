@@ -11,6 +11,8 @@ project(${PACKAGE_NAME})
 file(GLOB LIB_FILES
 	"src/compression/*.h"
 	"src/compression/*.cpp"
+	"src/utils/*.h"
+	"src/utils/*.cpp"
 	"src/*.h"
 	"src/*.cpp"
 )
