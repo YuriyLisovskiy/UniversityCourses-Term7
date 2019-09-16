@@ -21,12 +21,12 @@ bool is_uncompressed_24_bits(BITMAP_INFO_HEADER info)
 void write_compressed_pixel(std::fstream& file, PIXEL px, uint32_t repetition)
 {
 	file.write((char*) &repetition, sizeof(repetition));
-	file.write((char*) &px, sizeof(internal::PIXEL));
+	file.write((char*) &px, sizeof(px));
 }
 
 void read_headers(std::fstream& file, BITMAP_FILE_HEADER& head, BITMAP_INFO_HEADER& info)
 {
-	// read the headers to source file
+	// Read the headers to source file
 	file.read((char*) &head, sizeof(struct internal::BITMAP_FILE_HEADER));
 	file.read((char*) &info, sizeof(struct internal::BITMAP_INFO_HEADER));
 }
@@ -94,24 +94,24 @@ void bmp_compress(const std::string& input_file, const std::string& out_file)
 		if (!compare(current, next))
 		{
 			internal::write_compressed_pixel(out, current, repetition);
-			repetition = 0;
+			repetition = 1;
 		}
-		repetition++;
+		else
+		{
+			repetition++;
+		}
+
 		current = next;
 		in.read((char*) &next, sizeof(internal::PIXEL));
-
 		i++;
 	}
 
-	if (repetition > 1)
-	{
-		internal::write_compressed_pixel(out, current, repetition);
-	}
+	internal::write_compressed_pixel(out, current, repetition);
+
+	std::cout << in.tellg() << " bytes compressed into " << out.tellg() << " bytes.\n";
 
 	in.close();
 	out.close();
-
-	std::cout << "Image '" << input_file << "' has been compressed into '" << out_file << "' successfully.\n";
 }
 
 void bmp_decompress(const std::string& input_file, const std::string& out_file)
@@ -142,20 +142,21 @@ void bmp_decompress(const std::string& input_file, const std::string& out_file)
 	while (i < totalPixels)
 	{
 		in.read((char*) &pixelRepetition, sizeof(pixelRepetition));
-		in.read((char*) &pixel, sizeof(internal::PIXEL));
+		in.read((char*) &pixel, sizeof(pixel));
 
 		for (size_t j = 0; j < pixelRepetition; j++)
 		{
-			out.write((char*) &pixel, sizeof(internal::PIXEL));
+			out.write((char*) &pixel, sizeof(pixel));
+			i++;
 		}
-
-		i += pixelRepetition;
 	}
+
+	out.write((char*) &pixel, sizeof(pixel));
+
+	std::cout << in.tellg() << " bytes decompressed into " << out.tellg() << " bytes.\n";
 
 	in.close();
 	out.close();
-
-	std::cout << "Image '" << input_file << "' has been decompressed into '" << out_file << "' successfully.\n";
 }
 
 __RLE_END__
