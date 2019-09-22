@@ -38,7 +38,7 @@ void bmp_task()
 		(OUTPUT + base_file_name + "_uncompressed.bmp"),
 		decompress_td
 	);
-	std::cout << "Compressing:\n  reading: " << decompress_td.reading_time << " ms\n  writing: " << decompress_td.writing_time <<
+	std::cout << "Decompressing:\n  reading: " << decompress_td.reading_time << " ms\n  writing: " << decompress_td.writing_time <<
 		" ms\n  decoding: " << decompress_td.decoding_time << " ms\n";
 }
 

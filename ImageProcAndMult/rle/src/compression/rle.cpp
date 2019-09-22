@@ -147,7 +147,7 @@ void bmp_compress(const std::string& input_file, const std::string& out_file, Ti
 	out.close();
 	td.writing_time += tracker.elapsed(WRITING);
 
-	std::cout << internal::get_file_size(input_file) << " bytes compressed into " << internal::get_file_size(out_file) << " bytes.\n";
+//	std::cout << internal::get_file_size(input_file) << " bytes compressed into " << internal::get_file_size(out_file) << " bytes.\n";
 }
 
 void bmp_decompress(const std::string& input_file, const std::string& out_file, TimingData& td)
@@ -209,7 +209,7 @@ void bmp_decompress(const std::string& input_file, const std::string& out_file, 
 	out.close();
 	td.writing_time += tracker.elapsed(WRITING);
 
-	std::cout << internal::get_file_size(input_file) << " bytes decompressed into " << internal::get_file_size(out_file) << " bytes.\n";
+//	std::cout << internal::get_file_size(input_file) << " bytes decompressed into " << internal::get_file_size(out_file) << " bytes.\n";
 }
 
 __RLE_END__
