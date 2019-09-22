@@ -6,6 +6,9 @@
 #include <cstdint>
 #include <iostream>
 #include <fstream>
+#include <vector>
+
+#include "../utils/time_tracker.h"
 
 #define __RLE_BEGIN__ namespace rle {
 #define __RLE_END__ }
@@ -49,7 +52,7 @@ typedef struct SINGLE_PIXEL
 {
 	uint8_t green;  // Green level 0-255
 	uint8_t red;    // Red level 0-255
-	uint8_t blue;   // Green level 0-255
+	uint8_t blue;   // Blue level 0-255
 } PIXEL;
 
 extern bool compare(PIXEL px1, PIXEL px2);
@@ -64,13 +67,15 @@ extern void write_headers(std::fstream& file, BITMAP_FILE_HEADER head, BITMAP_IN
 
 extern void assert_file_is_open(std::fstream& file, const std::string& name);
 
+extern int get_file_size(const std::string& path);
+
 __RLE_INTERNAL_END__
 
 __RLE_BEGIN__
 
-extern void bmp_compress(const std::string& input_file, const std::string& out_file);
+extern void bmp_compress(const std::string& input_file, const std::string& out_file, TimingData& td);
 
-extern void bmp_decompress(const std::string& input_file, const std::string& out_file);
+extern void bmp_decompress(const std::string& input_file, const std::string& out_file, TimingData& td);
 
 __RLE_END__
 

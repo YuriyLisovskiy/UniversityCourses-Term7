@@ -47,20 +47,30 @@ void assert_file_is_open(std::fstream& file, const std::string& name)
 	}
 }
 
+int get_file_size(const std::string& path)
+{
+	std::fstream f;
+	f.open(path, std::ios::in | std::ios::ate | std::ios::binary);
+	return f.tellg();
+}
+
 __RLE_INTERNAL_END__
 
+#define READING "reading"
+#define WRITING "writing"
+#define ENCODING "encoding"
+#define DECODING "decoding"
 
 __RLE_BEGIN__
 
-void bmp_compress(const std::string& input_file, const std::string& out_file)
+void bmp_compress(const std::string& input_file, const std::string& out_file, TimingData& td)
 {
-	std::fstream in, out;
+	TimeTracker tracker;
 
+	tracker.start(READING);
+	std::fstream in;
 	in.open(input_file, std::ios::in | std::ios::binary);
 	internal::assert_file_is_open(in, input_file);
-
-	out.open(out_file, std::ios::out | std::ios::binary);
-	internal::assert_file_is_open(out, out_file);
 
 	// Store file header
 	struct internal::BITMAP_FILE_HEADER source_head{};
@@ -73,27 +83,31 @@ void bmp_compress(const std::string& input_file, const std::string& out_file)
 	if (!internal::is_uncompressed_24_bits(source_info))
 	{
 		in.close();
-		out.close();
-
 		exit(-1);
 	}
 
-	internal::write_headers(out, source_head, source_info);
-
 	uint32_t repetition = 1;
-	internal::PIXEL current, next;
+	internal::PIXEL next{};
 
-	in.read((char*) &current, sizeof(internal::PIXEL));
-	in.read((char*) &next, sizeof(internal::PIXEL));
-
-	size_t i = 0;
-	size_t totalPixels = source_info.width * source_info.height;
-
-	while (i < totalPixels)
+	std::vector<internal::PIXEL> pixels{};
+	while (!in.eof())
 	{
-		if (!compare(current, next))
+		in.read((char*) &next, sizeof(internal::PIXEL));
+		pixels.push_back(next);
+	}
+	in.close();
+	td.reading_time += tracker.elapsed(READING);
+
+	tracker.start(ENCODING);
+	internal::PIXEL current = pixels.front();
+	pixels.erase(pixels.begin());
+
+	std::vector<std::pair<internal::PIXEL, uint32_t>> compressed_pixels{};
+	for (const auto& pixel : pixels)
+	{
+		if (!compare(current, pixel))
 		{
-			internal::write_compressed_pixel(out, current, repetition);
+			compressed_pixels.emplace_back(current, repetition);
 			repetition = 1;
 		}
 		else
@@ -101,28 +115,36 @@ void bmp_compress(const std::string& input_file, const std::string& out_file)
 			repetition++;
 		}
 
-		current = next;
-		in.read((char*) &next, sizeof(internal::PIXEL));
-		i++;
+		current = pixel;
 	}
+	td.encoding_time += tracker.elapsed(ENCODING);
 
-	internal::write_compressed_pixel(out, current, repetition);
-
-	std::cout << in.tellg() << " bytes compressed into " << out.tellg() << " bytes.\n";
-
-	in.close();
-	out.close();
-}
-
-void bmp_decompress(const std::string& input_file, const std::string& out_file)
-{
-	std::fstream in, out;
-
-	in.open(input_file, std::ios::in | std::ios::binary);
-	internal::assert_file_is_open(in, input_file);
-
+	tracker.start(WRITING);
+	std::fstream out;
 	out.open(out_file, std::ios::out | std::ios::binary);
 	internal::assert_file_is_open(out, out_file);
+
+	internal::write_headers(out, source_head, source_info);
+
+	for (const auto& compressed_pixel : compressed_pixels)
+	{
+		internal::write_compressed_pixel(out, compressed_pixel.first, compressed_pixel.second);
+	}
+
+	out.close();
+	td.writing_time += tracker.elapsed(WRITING);
+
+	std::cout << internal::get_file_size(input_file) << " bytes compressed into " << internal::get_file_size(out_file) << " bytes.\n";
+}
+
+void bmp_decompress(const std::string& input_file, const std::string& out_file, TimingData& td)
+{
+	TimeTracker tracker;
+
+	tracker.start(READING);
+	std::fstream in;
+	in.open(input_file, std::ios::in | std::ios::binary);
+	internal::assert_file_is_open(in, input_file);
 
 	// Store file header
 	struct internal::BITMAP_FILE_HEADER source_head{};
@@ -131,32 +153,48 @@ void bmp_decompress(const std::string& input_file, const std::string& out_file)
 	struct internal::BITMAP_INFO_HEADER source_info{};
 
 	internal::read_headers(in, source_head, source_info);
-	internal::write_headers(out, source_head, source_info);
 
-	size_t totalPixels = source_info.width * source_info.height;
-
-	size_t i = 0;
 	uint32_t pixelRepetition = 0;
-	internal::PIXEL pixel;
+	internal::PIXEL pixel{};
 
-	while (i < totalPixels)
+	std::vector<std::pair<internal::PIXEL, uint32_t>> compressed_pixels{};
+	while (!in.eof())
 	{
-		in.read((char*) &pixelRepetition, sizeof(pixelRepetition));
-		in.read((char*) &pixel, sizeof(pixel));
+		in.read((char*) &pixelRepetition, sizeof(uint32_t));
+		in.read((char*) &pixel, sizeof(internal::PIXEL));
 
-		for (size_t j = 0; j < pixelRepetition; j++)
+		compressed_pixels.emplace_back(pixel, pixelRepetition);
+	}
+	in.close();
+	td.reading_time += tracker.elapsed(READING);
+
+	tracker.start(DECODING);
+	std::vector<internal::PIXEL> pixels{};
+	for (const auto& compressed_pixel : compressed_pixels)
+	{
+		for (size_t j = 0; j < compressed_pixel.second; j++)
 		{
-			out.write((char*) &pixel, sizeof(pixel));
-			i++;
+			pixels.push_back(compressed_pixel.first);
 		}
 	}
+	td.decoding_time += tracker.elapsed(DECODING);
 
-	out.write((char*) &pixel, sizeof(pixel));
+	tracker.start(WRITING);
+	std::fstream out;
+	out.open(out_file, std::ios::out | std::ios::binary);
+	internal::assert_file_is_open(out, out_file);
 
-	std::cout << in.tellg() << " bytes decompressed into " << out.tellg() << " bytes.\n";
+	internal::write_headers(out, source_head, source_info);
 
-	in.close();
+	for (const auto& px : pixels)
+	{
+		out.write((char*) &px, sizeof(pixel));
+	}
+
 	out.close();
+	td.writing_time += tracker.elapsed(WRITING);
+
+	std::cout << internal::get_file_size(input_file) << " bytes decompressed into " << internal::get_file_size(out_file) << " bytes.\n";
 }
 
 __RLE_END__

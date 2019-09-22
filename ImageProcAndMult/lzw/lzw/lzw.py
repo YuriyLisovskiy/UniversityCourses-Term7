@@ -44,6 +44,8 @@ def compress(uncompressed):
 			dictionary[sc] = dict_size
 			dict_size += 1
 			s = c
+		if dict_size > 999:
+			print(dict_size)
 	if s:
 		result.append(dictionary[s])
 	return result
@@ -55,17 +57,17 @@ def str_to_list(s):
 
 def decompress(compressed):
 	dict_size = 256
-	dictionary = {str(i): str(i) for i in range(dict_size)}
+	dictionary = {i: str(i) for i in range(dict_size)}
 
 	result = []
 	old = compressed.pop(0)
 	c = old
 	result.append(old)
 	for new in compressed:
-		if str(new) in dictionary:
-			s = dictionary[str(new)]
+		if new in dictionary:
+			s = dictionary[new]
 		else:
-			s = dictionary[str(old)]
+			s = dictionary[old]
 			if c != '':
 				s = '{},{}'.format(s, c)
 
@@ -75,7 +77,7 @@ def decompress(compressed):
 
 		c = s.split(',')[0]
 
-		dictionary[str(dict_size)] = '{},{}'.format(str(old), c)
+		dictionary[dict_size] = '{},{}'.format(old, c)
 		dict_size += 1
 		old = new
 	return result
