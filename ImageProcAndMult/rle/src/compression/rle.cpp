@@ -20,8 +20,8 @@ bool is_uncompressed_24_bits(BITMAP_INFO_HEADER info)
 
 void write_compressed_pixel(std::fstream& file, PIXEL px, uint32_t repetition)
 {
-	file.write((char*) &repetition, sizeof(repetition));
-	file.write((char*) &px, sizeof(px));
+	file.write((char*) &repetition, sizeof(uint32_t));
+	file.write((char*) &px, sizeof(PIXEL));
 }
 
 void read_headers(std::fstream& file, BITMAP_FILE_HEADER& head, BITMAP_INFO_HEADER& info)
@@ -86,10 +86,8 @@ void bmp_compress(const std::string& input_file, const std::string& out_file, Ti
 		exit(-1);
 	}
 
-	uint32_t repetition = 1;
-	internal::PIXEL next{};
-
 	std::vector<internal::PIXEL> pixels{};
+	internal::PIXEL next;
 	while (!in.eof())
 	{
 		in.read((char*) &next, sizeof(internal::PIXEL));
@@ -103,26 +101,41 @@ void bmp_compress(const std::string& input_file, const std::string& out_file, Ti
 	pixels.erase(pixels.begin());
 
 	std::vector<std::pair<internal::PIXEL, uint32_t>> compressed_pixels{};
+
+	bool write_last = false;
+	uint32_t repetition = 1;
+
 	for (const auto& pixel : pixels)
 	{
 		if (!compare(current, pixel))
 		{
 			compressed_pixels.emplace_back(current, repetition);
-			repetition = 1;
+			repetition = 0;
+			write_last = false;
 		}
 		else
 		{
-			repetition++;
+			write_last = true;
 		}
 
+		repetition++;
 		current = pixel;
 	}
+
+	if (write_last)
+	{
+		compressed_pixels.emplace_back(current, repetition);
+	}
+
 	td.encoding_time += tracker.elapsed(ENCODING);
 
 	tracker.start(WRITING);
 	std::fstream out;
 	out.open(out_file, std::ios::out | std::ios::binary);
 	internal::assert_file_is_open(out, out_file);
+
+	// Set compression flag to 1 which means RLE 8-bit/pixel
+//	source_info.compression = 1;
 
 	internal::write_headers(out, source_head, source_info);
 
@@ -184,6 +197,8 @@ void bmp_decompress(const std::string& input_file, const std::string& out_file, 
 	out.open(out_file, std::ios::out | std::ios::binary);
 	internal::assert_file_is_open(out, out_file);
 
+	// Remove compression flag
+//	source_info.compression = 0;
 	internal::write_headers(out, source_head, source_info);
 
 	for (const auto& px : pixels)

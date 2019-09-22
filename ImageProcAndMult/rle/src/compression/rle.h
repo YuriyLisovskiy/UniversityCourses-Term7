@@ -41,8 +41,8 @@ struct BITMAP_INFO_HEADER
 	uint16_t bit_count;
 	uint32_t compression;   // compression ratio (zero for no compression)
 	uint32_t size_image;    // size of image
-	long x_pels_per_meter;
-	long y_pels_per_meter;
+	uint32_t x_pels_per_meter;
+	uint32_t y_pels_per_meter;
 	uint32_t colors_used;
 	uint32_t colors_important;
 
