@@ -98,18 +98,10 @@ __RLE_END__
 
 __RLE_BEGIN__
 
-typedef struct SINGLE_PIXEL
-{
-	uint8_t green;  // Green level 0-255
-	uint8_t red;    // Red level 0-255
-	uint8_t blue;   // Blue level 0-255
+#define FILE_BUFFER_SIZE 1024
 
-} PIXEL;
-
-extern bool compare(PIXEL px1, PIXEL px2);
-
-// extern const uint8_t lineFeed;
-// extern const uint8_t imageEnd;
+extern const uint8_t lineFeed;
+extern const uint8_t imageEnd;
 
 typedef struct __attribute__ ((__packed__)) _bitmap {
 	uint8_t magicNumber[2];

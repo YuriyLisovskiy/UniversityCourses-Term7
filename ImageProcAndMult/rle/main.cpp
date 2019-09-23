@@ -22,7 +22,7 @@ void prepare()
 
 void bmp_task()
 {
-	std::string base_file_name = "images_5";
+	std::string base_file_name = "8bit_gc";
 
 	TimingData compress_td;
 	if (rle::bmp_compress(
