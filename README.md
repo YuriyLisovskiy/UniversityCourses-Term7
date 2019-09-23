@@ -1,7 +1,9 @@
 ## University Courses #7
 
 ### Courses:
-* [Image Processing and Multimedia](ImageProcAndMult)
+* [AI Python](AIPython)
+* [Applied Python Programming](AppliedPythonProgr)
+* [Image Processing and Multimedia](ImageProcessing)
 
 #### Author:
 [Yuriy Lisovskiy](https://github.com/YuriyLisovskiy)
