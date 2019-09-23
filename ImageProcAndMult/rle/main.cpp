@@ -1,5 +1,6 @@
 #include <string>
 #include <sys/stat.h>
+#include <iostream>
 
 #include "src/compression/rle.h"
 
@@ -24,22 +25,26 @@ void bmp_task()
 	std::string base_file_name = "images_5";
 
 	TimingData compress_td;
-	rle::bmp_compress(
+	if (rle::bmp_compress(
 		(IMAGES + base_file_name + ".bmp"),
 		(OUTPUT + base_file_name + "_compressed.bmp"),
 		compress_td
-	);
-	std::cout << "Compressing:\n  reading: " << compress_td.reading_time << " ms\n  writing: " << compress_td.writing_time <<
-		" ms\n  encoding: " << compress_td.encoding_time << " ms\n\n";
+	) == EXIT_SUCCESS)
+	{
+		std::cout << "Compressing:\n  reading: " << compress_td.reading_time << " ms\n  writing: " << compress_td.writing_time <<
+			" ms\n  encoding: " << compress_td.encoding_time << " ms\n\n";
 
-	TimingData decompress_td;
-	rle::bmp_decompress(
-		(OUTPUT + base_file_name + "_compressed.bmp"),
-		(OUTPUT + base_file_name + "_uncompressed.bmp"),
-		decompress_td
-	);
-	std::cout << "Decompressing:\n  reading: " << decompress_td.reading_time << " ms\n  writing: " << decompress_td.writing_time <<
-		" ms\n  decoding: " << decompress_td.decoding_time << " ms\n";
+		TimingData decompress_td;
+		if (rle::bmp_decompress(
+				(OUTPUT + base_file_name + "_compressed.bmp"),
+				(OUTPUT + base_file_name + "_uncompressed.bmp"),
+				decompress_td
+		) == EXIT_SUCCESS)
+		{
+			std::cout << "Decompressing:\n  reading: " << decompress_td.reading_time << " ms\n  writing: " << decompress_td.writing_time <<
+				" ms\n  decoding: " << decompress_td.decoding_time << " ms\n";
+		}
+	}
 }
 
 int main()

@@ -1,6 +1,8 @@
 #ifndef IMAGE_PROC_AND_MULT_RLE_H
 #define IMAGE_PROC_AND_MULT_RLE_H
 
+/*
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstdint>
@@ -76,6 +78,59 @@ __RLE_BEGIN__
 extern void bmp_compress(const std::string& input_file, const std::string& out_file, TimingData& td);
 
 extern void bmp_decompress(const std::string& input_file, const std::string& out_file, TimingData& td);
+
+__RLE_END__
+
+*/
+
+#include <cstdlib>
+#include <cstring>
+#include <cstdbool>
+#include <cstdint>
+#include <cstdio>
+#include <fstream>
+#include <vector>
+
+#include "../utils/time_tracker.h"
+
+#define __RLE_BEGIN__ namespace rle {
+#define __RLE_END__ }
+
+__RLE_BEGIN__
+
+typedef struct SINGLE_PIXEL
+{
+	uint8_t green;  // Green level 0-255
+	uint8_t red;    // Red level 0-255
+	uint8_t blue;   // Blue level 0-255
+
+} PIXEL;
+
+extern bool compare(PIXEL px1, PIXEL px2);
+
+// extern const uint8_t lineFeed;
+// extern const uint8_t imageEnd;
+
+typedef struct __attribute__ ((__packed__)) _bitmap {
+	uint8_t magicNumber[2];
+	uint32_t size;
+	uint8_t reserved[4];
+	uint32_t startOffset;
+	uint32_t headerSize;
+	uint32_t width;
+	uint32_t height;
+	uint16_t planes;
+	uint16_t depth;
+	uint32_t compression;
+	uint32_t imageSize;
+	uint32_t xPPM;
+	uint32_t yPPM;
+	uint32_t nUsedColors;
+	uint32_t nImportantColors;
+} _bitmap;
+
+extern int bmp_compress(const std::string& input_file, const std::string& out_file, TimingData& td);
+extern int bmp_decompress(const std::string& input_file, const std::string& out_file, TimingData& td);
 
 __RLE_END__
 
