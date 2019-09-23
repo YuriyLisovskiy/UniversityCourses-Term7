@@ -195,12 +195,12 @@ const uint8_t imageEnd = 0x01;
 
 int bmp_compress(const std::string& input_file, const std::string& out_file, TimingData& td)
 {
-	uint32_t i, total = 0;
+	uint32_t total = 0;
 	bool ok = true;
-	uint8_t occ = 1, cur, cur2;
+	uint8_t occurrences = 1, current, next;
 	bool readRef = true;
 	std::fstream in, out;
-	uint8_t* pallet;
+	uint8_t* palette;
 	std::vector<uint8_t> data;
 
 	// Reading the file
@@ -222,7 +222,7 @@ int bmp_compress(const std::string& input_file, const std::string& out_file, Tim
 	}
 
 	// Controlling the start offset
-	if (image->startOffset < sizeof (_bitmap))
+	if (image->startOffset < sizeof(_bitmap))
 	{
 		fprintf(stderr, "Error: Wrong start offset\n");
 		ok = false;
@@ -230,32 +230,26 @@ int bmp_compress(const std::string& input_file, const std::string& out_file, Tim
 	}
 
 	// Skipping data from the beginning to the start offset
-	pallet = (uint8_t*) malloc(image->startOffset - sizeof (_bitmap));
-	if (!pallet)
-	{
-		fprintf(stderr, "Error while allocating memory\n");
-		ok = false;
-		goto cleaning;
-	}
+	palette = (uint8_t*) malloc(image->startOffset - sizeof (_bitmap));
+	in.read((char*) palette, image->startOffset - sizeof (_bitmap));
 
-	for (i = 0; i < (image->startOffset - sizeof (_bitmap)) / FILE_BUFFER_SIZE; i++)
-	{
-		in.read((char*) (pallet + i * FILE_BUFFER_SIZE), FILE_BUFFER_SIZE);
-	}
+//	for (i = 0; i < (image->startOffset - sizeof (_bitmap)) / FILE_BUFFER_SIZE; i++)
+//	{
+//		in.read((char*) palette + i * FILE_BUFFER_SIZE, FILE_BUFFER_SIZE);
+//	}
 
-	in.read((char*) (pallet + i * FILE_BUFFER_SIZE), (image->startOffset - sizeof (_bitmap)) % FILE_BUFFER_SIZE);
+//	in.read((char*) palette + i * FILE_BUFFER_SIZE, (image->startOffset - sizeof (_bitmap)) % FILE_BUFFER_SIZE);
 
 	// RLE compression
-	in.read((char*) &cur, sizeof(uint8_t));
-	for (i = 0; i < image->imageSize; i++)
+	for (size_t i = 0; i < image->imageSize; i++)
 	{
 		// End of line
 		if (i && !(i % image->width))
 		{
-			if (occ)
+			if (occurrences)
 			{
-				data.push_back(occ);
-				data.push_back(cur);
+				data.push_back(occurrences);
+				data.push_back(current);
 				total += 2;
 			}
 
@@ -263,52 +257,52 @@ int bmp_compress(const std::string& input_file, const std::string& out_file, Tim
 			data.push_back(lineFeed);
 			total += 2;
 
-			occ = 0;
+			occurrences = 0;
 			readRef = true;
 		}
 
 		// Max occurrences
-		if (255 == occ)
+		if (255 == occurrences)
 		{
-			data.push_back(occ);
-			data.push_back(cur);
+			data.push_back(occurrences);
+			data.push_back(current);
 			total += 2;
 
-			occ = 0;
+			occurrences = 0;
 			readRef = true;
 		}
 
 		if (readRef)
 		{
-			in.read((char*) &cur, sizeof(uint8_t));
-			occ++;
+			in.read((char*) &current, sizeof(uint8_t));
+			occurrences++;
 			readRef = false;
 		}
 		else
 		{
-			in.read((char*) &cur2, sizeof(uint8_t));
-			if (cur == cur2)
+			in.read((char*) &next, sizeof(uint8_t));
+			if (current == next)
 			{
-				occ++;
+				occurrences++;
 			}
 			else
 			{
-				data.push_back(occ);
-				data.push_back(cur);
+				data.push_back(occurrences);
+				data.push_back(current);
 				total += 2;
 
-				occ = 1;
-				cur = cur2;
+				occurrences = 1;
+				current = next;
 			}
 		}
 	}
 	in.close();
 
 	// End of the last line
-	if (occ)
+	if (occurrences)
 	{
-		data.push_back(occ);
-		data.push_back(cur);
+		data.push_back(occurrences);
+		data.push_back(current);
 		total += 2;
 	}
 
@@ -328,10 +322,10 @@ int bmp_compress(const std::string& input_file, const std::string& out_file, Tim
 	out.open(out_file, std::ios::binary | std::ios::out);
 
 	out.write((char*) image, sizeof(_bitmap));
-	out.write((char*) pallet, image->startOffset - sizeof (_bitmap));
-	for (const auto& px : data)
+	out.write((char*) palette, image->startOffset - sizeof(_bitmap));
+	for (auto px : data)
 	{
-		out.write((char*) &px, total * sizeof(uint8_t));
+		out.write((char*) &px, sizeof(uint8_t));
 	}
 
 cleaning:
@@ -340,15 +334,10 @@ cleaning:
 		free(image);
 	}
 
-	if (pallet)
+	if (palette)
 	{
-		free(pallet);
+		free(palette);
 	}
-
-//	if (data)
-//	{
-//		free(data);
-//	}
 
 	if (in.is_open())
 	{
@@ -373,10 +362,9 @@ cleaning:
 int bmp_decompress(const std::string& input_file, const std::string& out_file, TimingData& td)
 {
 	bool ok = true;
-	uint32_t i, j, total = 0;
+	uint32_t total = 0;
 	uint8_t couples[2];
-//	uint8_t* data;
-	uint8_t* pallet;
+	uint8_t* palette;
 	std::fstream in, out;
 	std::vector<uint8_t> data;
 
@@ -407,28 +395,23 @@ int bmp_decompress(const std::string& input_file, const std::string& out_file, T
 	}
 
 	// Skipping data from the beginning to the start offset
-	pallet = (uint8_t*) malloc(image->startOffset - sizeof(_bitmap));
-	if (!pallet)
-	{
-		fprintf(stderr, "Error while allocating memory\n");
-		ok = false;
-		goto cleaning;
-	}
+	palette = (uint8_t*) malloc(image->startOffset - sizeof(_bitmap));
+	in.read((char*) palette, image->startOffset - sizeof(_bitmap));
 
-	for (i = 0; i < (image->startOffset - sizeof (_bitmap)) / FILE_BUFFER_SIZE; i++)
-	{
-		in.read((char*) (pallet + i * FILE_BUFFER_SIZE), FILE_BUFFER_SIZE);
-	}
+//	for (i = 0; i < (image->startOffset - sizeof (_bitmap)) / FILE_BUFFER_SIZE; i++)
+//	{
+//		in.read((char*) palette + i * FILE_BUFFER_SIZE, FILE_BUFFER_SIZE);
+//	}
 
-	in.read((char*) (pallet + i * FILE_BUFFER_SIZE), (image->startOffset - sizeof (_bitmap)) % FILE_BUFFER_SIZE);
+//	in.read((char*) palette + i * FILE_BUFFER_SIZE, (image->startOffset - sizeof (_bitmap)) % FILE_BUFFER_SIZE);
 
 	// RLE decompression
-	for (i = 0; i < image->imageSize / 2; i++)
+	for (size_t i = 0; i < image->imageSize / 2; i++)
 	{
 		in.read((char*) &couples, 2 * sizeof(uint8_t));
 		if (couples[0])
 		{
-			for (j = 0; j < couples[0]; j++)
+			for (size_t j = 0; j < couples[0]; j++)
 			{
 				data.push_back(couples[1]);
 				total++;
@@ -447,8 +430,8 @@ int bmp_decompress(const std::string& input_file, const std::string& out_file, T
 	out.open(out_file, std::ios::binary | std::ios::out);
 
 	out.write((char*) image, sizeof(_bitmap));
-	out.write((char*) pallet, image->startOffset - sizeof (_bitmap));
-	for (const auto& px : data)
+	out.write((char*) palette, image->startOffset - sizeof(_bitmap));
+	for (auto px : data)
 	{
 		out.write((char*) &px, sizeof(uint8_t));
 	}
@@ -461,15 +444,10 @@ cleaning:
 		free(image);
 	}
 
-	if (pallet)
+	if (palette)
 	{
-		free(pallet);
+		free(palette);
 	}
-
-//	if (data)
-//	{
-//		free(data);
-//	}
 
 	if (in.is_open())
 	{

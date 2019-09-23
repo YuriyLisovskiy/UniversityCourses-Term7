@@ -36,9 +36,9 @@ void bmp_task()
 
 		TimingData decompress_td;
 		if (rle::bmp_decompress(
-				(OUTPUT + base_file_name + "_compressed.bmp"),
-				(OUTPUT + base_file_name + "_uncompressed.bmp"),
-				decompress_td
+			(OUTPUT + base_file_name + "_compressed.bmp"),
+			(OUTPUT + base_file_name + "_uncompressed.bmp"),
+			decompress_td
 		) == EXIT_SUCCESS)
 		{
 			std::cout << "Decompressing:\n  reading: " << decompress_td.reading_time << " ms\n  writing: " << decompress_td.writing_time <<
