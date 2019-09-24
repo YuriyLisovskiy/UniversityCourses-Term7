@@ -143,4 +143,4 @@ venv.bak/
 .mypy_cache/
 
 !AIPython/lib/
-
+!ImageProcessing/*/output/
