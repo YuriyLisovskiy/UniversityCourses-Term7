@@ -27,7 +27,7 @@ namespace ImageProcessing.Compression
 
 			using (var image = new Bitmap(_inputFile))
 			{
-				image.Save(outputFile, Utils.GetEncoder(ImageFormat.Jpeg), encoderParameters);	
+				image.Save(outputFile, Utils.GetEncoder(ImageFormat.Jpeg), encoderParameters);
 			}
 		}
 

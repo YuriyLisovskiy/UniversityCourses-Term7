@@ -11,6 +11,11 @@ namespace ImageProcessing.Compression
 	{
 		private string _inputFile;
 
+		private const byte BI_RGB = 0x0000;
+		private const byte BI_RLE8 = 0x0001;
+		
+		private const ushort Max256Colors = 0x0008;
+
 		public Rle(string inputFile)
 		{
 			_inputFile = inputFile;
@@ -25,7 +30,7 @@ namespace ImageProcessing.Compression
 		{
 			using (var image = new Bitmap(_inputFile))
 			{
-				File.WriteAllBytes(outputFile, RunLengthEncodeBitmap(image));
+				File.WriteAllBytes(outputFile, _encodeBitmap(image));
 			}
 		}
 
@@ -33,34 +38,8 @@ namespace ImageProcessing.Compression
 		{
 			using (var image = new Bitmap(_inputFile))
 			{
-				File.WriteAllBytes(outputFile, RunLengthDecodeBitmap(image));
+				File.WriteAllBytes(outputFile, _decodeBitmap(image));
 			}
-		}
-
-		private enum Compression
-		{
-			// others not necessary for the 8bpp compression, but left for reference
-			BI_RGB = 0x0000,
-			BI_RLE8 = 0x0001,
-			//BI_RLE4 = 0x0002,
-			//BI_BITFIELDS = 0x0003,
-			//BI_JPEG = 0x0004,
-			//BI_PNG = 0x0005,
-			//BI_CMYK = 0x000B,
-			//BI_CMYKRLE8 = 0x000C,
-			//BI_CMYKRLE4 = 0x000D
-		}
-
-		private enum BitCount
-		{
-			// others not necessary for the 8bpp compression, but left for reference
-			//Undefined = (ushort)0x0000,
-			//TwoColors = (ushort)0x0001,
-			//Max16Colors = (ushort)0x0004,
-			Max256Colors = (ushort) 0x0008,
-			//Max32KBColors = (ushort)0x0010,
-			//Max16MBColors = (ushort)0x0018,
-			//Max16MBColors_Compressed = (ushort)0x0020
 		}
 
 		private struct RleCompressedBmpHeader
@@ -101,12 +80,12 @@ namespace ImageProcessing.Compression
 			/// <summary>
 			/// Number of bits that define each pixel and maximum number of colors
 			/// </summary>
-			public BitCount BitCount;
+			public ushort BitCount;
 
 			/// <summary>
 			/// Defines the compression mode of the bitmap.
 			/// </summary>
-			public Compression Compression;
+			public uint Compression;
 
 			/// <summary>
 			/// Size, in bytes, of image.
@@ -143,8 +122,8 @@ namespace ImageProcessing.Compression
 				result.AddRange(BitConverter.GetBytes(Width));
 				result.AddRange(BitConverter.GetBytes(Height));
 				result.AddRange(BitConverter.GetBytes(Planes));
-				result.AddRange(BitConverter.GetBytes((ushort) BitCount));
-				result.AddRange(BitConverter.GetBytes((uint) Compression));
+				result.AddRange(BitConverter.GetBytes(BitCount));
+				result.AddRange(BitConverter.GetBytes(Compression));
 				result.AddRange(BitConverter.GetBytes(ImageSize));
 				result.AddRange(BitConverter.GetBytes(XPixelsPerMeter));
 				result.AddRange(BitConverter.GetBytes(YPixelsPerMeter));
@@ -155,7 +134,7 @@ namespace ImageProcessing.Compression
 			}
 		}
 
-		private static unsafe byte[] RunLengthEncodeBitmap(Bitmap bmp)
+		private static unsafe byte[] _encodeBitmap(Bitmap bmp)
 		{
 			if (bmp.PixelFormat != PixelFormat.Format8bppIndexed)
 			{
@@ -225,22 +204,22 @@ namespace ImageProcessing.Compression
 			header.Width = bmp.Width;
 			header.Height = bmp.Height;
 			header.Planes = 1;
-			header.BitCount = BitCount.Max256Colors;
+			header.BitCount = Max256Colors;
 			// as far as I can tell, PixelsPerMeter are not terribly important
 			header.XPixelsPerMeter = 0x10000000;
 			header.YPixelsPerMeter = 0x10000000;
-			header.Compression = Compression.BI_RLE8;
+			header.Compression = BI_RLE8;
 			header.ColorUsed = 256;
 			header.ColorImportant = 0; // use all available colors
 			header.ImageSize = header.HeaderSize + (uint) result.Count;
 
 			var headerBytes = header.ToBytes();
-			var paletteBytes = ConvertPaletteToBytes(bmp.Palette);
+			var paletteBytes = _paletteToBytes(bmp.Palette);
 
 			return headerBytes.Concat(paletteBytes).Concat(result).ToArray();
 		}
 		
-		private static unsafe byte[] RunLengthDecodeBitmap(Bitmap bmp)
+		private static unsafe byte[] _decodeBitmap(Bitmap bmp)
 		{
 			if (bmp.PixelFormat != PixelFormat.Format8bppIndexed)
 			{
@@ -278,22 +257,22 @@ namespace ImageProcessing.Compression
 			header.Width = bmp.Width;
 			header.Height = bmp.Height;
 			header.Planes = 1;
-			header.BitCount = BitCount.Max256Colors;
+			header.BitCount = Max256Colors;
 			// as far as I can tell, PixelsPerMeter are not terribly important
 			header.XPixelsPerMeter = 0x10000000;
 			header.YPixelsPerMeter = 0x10000000;
-			header.Compression = Compression.BI_RGB;
+			header.Compression = BI_RGB;
 			header.ColorUsed = 256;
 			header.ColorImportant = 0; // use all available colors
 			header.ImageSize = header.HeaderSize + (uint) result.Count;
 
 			var headerBytes = header.ToBytes();
-			var paletteBytes = ConvertPaletteToBytes(bmp.Palette);
+			var paletteBytes = _paletteToBytes(bmp.Palette);
 
 			return headerBytes.Concat(paletteBytes).Concat(result).ToArray();
 		}
 
-		private static IEnumerable<byte> ConvertPaletteToBytes(ColorPalette colorPalette)
+		private static IEnumerable<byte> _paletteToBytes(ColorPalette colorPalette)
 		{
 			return colorPalette.Entries.SelectMany(c => new byte[]
 			{

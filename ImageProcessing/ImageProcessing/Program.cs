@@ -8,10 +8,11 @@ namespace ImageProcessing
 	{
 		private const string InputImage8bit = "images_5_8bit.bmp";
 		private const string InputImage24bit = "images_5.bmp";
+		private const string InputImageTiff = "images_5.tiff";
 		
 		private const string OutputImageRle8Bit = "images_5_8bit_rle.bmp";
 		private const string OutputImageJpeg = "images_5_se.jpeg";
-		
+
 		private static string _getRootDirectory()
 		{
 			return Path.GetDirectoryName(
@@ -32,7 +33,7 @@ namespace ImageProcessing
 		
 		private static void Main()
 		{
-			Console.WriteLine("Converting...");
+			Console.WriteLine("Doing stuff...");
 			
 			var rootDirectory = _getRootDirectory();
 			var inputDirectory = rootDirectory + "/Input/";
@@ -46,9 +47,9 @@ namespace ImageProcessing
 		//	var rle = new Rle(outputDirectory + OutputImageRle8Bit);
 		//	rle.Decompress(outputDirectory + InputImage8bit);
 		
-			var jpeg = new Jpeg(inputDirectory + InputImage24bit);
-			jpeg.Compress(outputDirectory + OutputImageJpeg);
-			
+		//	var jpeg = new Jpeg(inputDirectory + InputImage24bit);
+		//	jpeg.Compress(outputDirectory + OutputImageJpeg);
+
 			Console.WriteLine("Done.");
 		}
 	}
