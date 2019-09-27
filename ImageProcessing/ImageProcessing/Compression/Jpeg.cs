@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 
 namespace ImageProcessing.Compression
 {
@@ -33,7 +34,14 @@ namespace ImageProcessing.Compression
 
 		public void Decompress(string outputFile)
 		{
-			throw new NotImplementedException();
+			using (var bmpStream = File.Open(_inputFile, FileMode.Open))
+			{
+				var jpeg = Image.FromStream(bmpStream);
+				using (var image = new Bitmap(jpeg))
+				{
+					image.Save(outputFile, Utils.GetEncoder(ImageFormat.Bmp), null);
+				}
+			}
 		}
 	}
 }

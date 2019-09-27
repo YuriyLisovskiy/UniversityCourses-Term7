@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace ImageProcessing.Compression
 {
-	public class Utils
+	public static class Utils
 	{
 		public static ImageCodecInfo GetEncoder(ImageFormat format)
 		{
