@@ -2,7 +2,7 @@
 
 ### Courses:
 * [AI Python](AIPython)
-* [Applied Python Programming](AppliedPythonProgr)
+* [Applied Python Programming](AppliedPythonProgramming)
 * [Image Processing and Multimedia](ImageProcessing)
 
 #### Author:
