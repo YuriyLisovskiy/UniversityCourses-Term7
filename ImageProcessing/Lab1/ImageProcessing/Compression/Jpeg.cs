@@ -30,11 +30,11 @@ namespace ImageProcessing.Compression
 
 		public override void Compress(string outputFile)
 		{
-			using (var bitmap = new Bitmap(_inputFile))
+			using (var bitmap = new Bitmap(InputFile))
 			{
-				bitmap.Save(outputFile, Utils.GetEncoder(_encoder), new EncoderParameters(1)
+				bitmap.Save(outputFile, Utils.GetEncoder(Encoder), new EncoderParameters(1)
 				{
-					Param = {[0] = new EncoderParameter(Encoder.Quality, 100L)}
+					Param = {[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 85L)}
 				});
 			}
 		}
