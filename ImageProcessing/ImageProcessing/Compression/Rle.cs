@@ -7,8 +7,18 @@ using System.Linq;
 
 namespace ImageProcessing.Compression
 {
-	public class Rle : ICompressor
+	public class Rle : Compressor
 	{
+		public Rle(string inputFile) : base(
+			inputFile,
+			ImageFormat.Bmp,
+			ImageFormat.Bmp,
+			EncoderValue.CompressionRle
+		)
+		{
+		}
+
+		/*
 		private string _inputFile;
 
 		private const byte BI_RGB = 0x0000;
@@ -282,5 +292,7 @@ namespace ImageProcessing.Compression
 				0
 			}).ToArray();
 		}
+		
+		*/
 	}
 }

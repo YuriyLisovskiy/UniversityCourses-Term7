@@ -1,12 +1,11 @@
-using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
 
 namespace ImageProcessing.Compression
 {
-	public class Jpeg : ICompressor
+	public class Jpeg : Compressor
 	{
+		/*
 		private string _inputFile;
 
 		public Jpeg(string inputFile)
@@ -18,30 +17,40 @@ namespace ImageProcessing.Compression
 		{
 			_inputFile = inputFile;
 		}
-
-		public void Compress(string outputFile)
+		*/
+		
+		public Jpeg(string inputFile) : base(
+			inputFile,
+			ImageFormat.Jpeg,
+			ImageFormat.Bmp,
+			EncoderValue.CompressionNone
+		)
 		{
-			var encoderParameters = new EncoderParameters(1)
-			{
-				Param = {[0] = new EncoderParameter(Encoder.Quality, 100L)}
-			};
+		}
 
-			using (var image = new Bitmap(_inputFile))
+		public override void Compress(string outputFile)
+		{
+			using (var bitmap = new Bitmap(_inputFile))
 			{
-				image.Save(outputFile, Utils.GetEncoder(ImageFormat.Jpeg), encoderParameters);
+				bitmap.Save(outputFile, Utils.GetEncoder(_encoder), new EncoderParameters(1)
+				{
+					Param = {[0] = new EncoderParameter(Encoder.Quality, 100L)}
+				});
 			}
 		}
 
+		/*
 		public void Decompress(string outputFile)
 		{
-			using (var bmpStream = File.Open(_inputFile, FileMode.Open))
+			using (var jpegStream = File.Open(_inputFile, FileMode.Open))
 			{
-				var jpeg = Image.FromStream(bmpStream);
+				var jpeg = Image.FromStream(jpegStream);
 				using (var image = new Bitmap(jpeg))
 				{
 					image.Save(outputFile, Utils.GetEncoder(ImageFormat.Bmp), null);
 				}
 			}
 		}
+		*/
 	}
 }
