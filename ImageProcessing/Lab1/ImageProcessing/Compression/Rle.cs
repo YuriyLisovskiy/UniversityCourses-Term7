@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
+using ImageProcessing.Types;
 
 namespace ImageProcessing.Compression
 {
@@ -16,7 +17,7 @@ namespace ImageProcessing.Compression
 		{
 		}
 
-		private static byte[] _encodeBitmap(Bmp bmp)
+		private static byte[] _encodeBitmap(Bitmap bmp)
 		{
 			if (bmp.infoHeader.BitCount != 8)
 			{
@@ -77,18 +78,18 @@ namespace ImageProcessing.Compression
 				}
 			}
 
-			var compressedBmp = new Bmp
+			var compressedBmp = new Bitmap
 			{
 				header = bmp.header,
 				infoHeader = bmp.infoHeader,
 				palette = bmp.palette,
-				image = new Bmp.Image
+				image = new Bitmap.Image
 				{
 					Bytes = result.ToArray()
 				}
 			};
 
-			compressedBmp.header.DataOffset = Bmp.Header.Size + Bmp.InfoHeader.Size + Bmp.Palette.Size;
+			compressedBmp.header.DataOffset = Bitmap.Header.Size + Bitmap.InfoHeader.Size + Bitmap.Palette.Size;
 			compressedBmp.header.FileSize = compressedBmp.header.DataOffset + (uint) result.Count;
 			
 			compressedBmp.infoHeader.Compression = 0x0001;
@@ -98,7 +99,7 @@ namespace ImageProcessing.Compression
 			return compressedBmp.ToBytes();
 		}
 		
-		private static byte[] _decodeBitmap(Bmp bmp)
+		private static byte[] _decodeBitmap(Bitmap bmp)
 		{
 			if (bmp.infoHeader.BitCount != 8)
 			{
@@ -132,18 +133,18 @@ namespace ImageProcessing.Compression
 				}
 			}
 
-			var compressedBmp = new Bmp
+			var compressedBmp = new Bitmap
 			{
 				header = bmp.header,
 				infoHeader = bmp.infoHeader,
 				palette = bmp.palette,
-				image = new Bmp.Image
+				image = new Bitmap.Image
 				{
 					Bytes = result.ToArray()
 				}
 			};
 			
-			compressedBmp.header.DataOffset = Bmp.Header.Size + Bmp.InfoHeader.Size + Bmp.Palette.Size;
+			compressedBmp.header.DataOffset = Bitmap.Header.Size + Bitmap.InfoHeader.Size + Bitmap.Palette.Size;
 			compressedBmp.header.FileSize = compressedBmp.header.DataOffset + (uint) result.Count;
 			
 			compressedBmp.infoHeader.Compression = 0x0000;
@@ -155,13 +156,13 @@ namespace ImageProcessing.Compression
 		
 		public override void Compress(string outputFile)
 		{
-			var bitmap = new Bmp(InputFile);
+			var bitmap = new Bitmap(InputFile);
 			File.WriteAllBytes(outputFile, _encodeBitmap(bitmap));
 		}
 		
 		public override void Decompress(string outputFile)
 		{
-			var bitmap = new Bmp(InputFile);
+			var bitmap = new Bitmap(InputFile);
 			File.WriteAllBytes(outputFile, _decodeBitmap(bitmap));
 		}
 	}

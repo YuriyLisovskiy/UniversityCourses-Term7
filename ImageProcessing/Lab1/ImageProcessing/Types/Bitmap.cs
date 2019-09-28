@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace ImageProcessing.Compression
+namespace ImageProcessing.Types
 {
-	public class Bmp
+	public class Bitmap
 	{
-		public Bmp()
+		public Bitmap()
 		{
 		}
 		
-		public Bmp(string path)
+		public Bitmap(string path)
 		{
-			_readBitmap(path);
+			_read(path);
 		}
 
 		public Header header;
@@ -21,7 +21,7 @@ namespace ImageProcessing.Compression
 		public Palette palette;
 		public Image image;
 
-		private void _readBitmap(string path)
+		private void _read(string path)
 		{
 			using (var reader = new BinaryReader(File.OpenRead(path)))
 			{
@@ -112,7 +112,6 @@ namespace ImageProcessing.Compression
             
             public IEnumerable<byte> ToBytes()
             {
-	            //	var swap = BitConverter.IsLittleEndian;
 	            var result = new List<byte>();
 	            
 	            result.AddRange(BitConverter.GetBytes(InfoHeaderSize));
