@@ -5,20 +5,6 @@ namespace ImageProcessing.Compression
 {
 	public class Jpeg : Compressor
 	{
-		/*
-		private string _inputFile;
-
-		public Jpeg(string inputFile)
-		{
-			_inputFile = inputFile;
-		}
-
-		public void SetInputFile(string inputFile)
-		{
-			_inputFile = inputFile;
-		}
-		*/
-		
 		public Jpeg(string inputFile) : base(
 			inputFile,
 			ImageFormat.Jpeg,
@@ -38,19 +24,5 @@ namespace ImageProcessing.Compression
 				});
 			}
 		}
-
-		/*
-		public void Decompress(string outputFile)
-		{
-			using (var jpegStream = File.Open(_inputFile, FileMode.Open))
-			{
-				var jpeg = Image.FromStream(jpegStream);
-				using (var image = new Bitmap(jpeg))
-				{
-					image.Save(outputFile, Utils.GetEncoder(ImageFormat.Bmp), null);
-				}
-			}
-		}
-		*/
 	}
 }

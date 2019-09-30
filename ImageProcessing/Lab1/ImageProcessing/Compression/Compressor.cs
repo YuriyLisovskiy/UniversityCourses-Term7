@@ -4,7 +4,7 @@ using System.IO;
 
 namespace ImageProcessing.Compression
 {
-	public class Compressor : ICompressor
+	public class Compressor
 	{
 		protected string InputFile;
 		protected readonly ImageFormat Encoder;

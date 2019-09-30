@@ -12,12 +12,14 @@ namespace ImageProcessing.Tasks
 		
 		public static string _c8BitImageRle;
 		public static string _d8BitImageRle;
-		
-		public static string _c24BitImageRle;
-		public static string _d24BitImageRle;
-		
+
 		public static string _cImageJpeg;
 		public static string _dImageJpeg;
+
+		public static string _diffJpegBmpAll;
+		public static string _diffJpegBmpR;
+		public static string _diffJpegBmpG;
+		public static string _diffJpegBmpB;
 
 		public static void Init()
 		{
@@ -32,6 +34,7 @@ namespace ImageProcessing.Tasks
 			var outDir = rootDir + "/Output/";
 			var compressedDir = outDir + "Compressed/";
 			var decompressedDir = outDir + "Decompressed/";
+			var differencesDir = outDir + "Differences/";
 
 			const string imageName = "images_5";
 			
@@ -52,15 +55,18 @@ namespace ImageProcessing.Tasks
 			
 			_c8BitImageRle = compressedDir + $"rle_encoded_8bit_{imageName}.bmp";
 			_d8BitImageRle = decompressedDir + $"rle_decoded_8bit_{imageName}.bmp";
-			
-			_c24BitImageRle = compressedDir + $"rle_encoded_24bit_{imageName}.bmp";
-			_d24BitImageRle = decompressedDir + $"rle_decoded_24bit_{imageName}.bmp";
-			
+
 			_cImageJpeg = compressedDir + $"jpeg_encoded_{imageName}.jpeg";
 			_dImageJpeg = decompressedDir + $"jpeg_decoded_{imageName}.bmp";
+
+			_diffJpegBmpAll = differencesDir + "diff_jpeg_bmp.bmp";
+			_diffJpegBmpR = differencesDir + "diff_jpeg_bmp_r.bmp";
+			_diffJpegBmpG = differencesDir + "diff_jpeg_bmp_g.bmp";
+			_diffJpegBmpB = differencesDir + "diff_jpeg_bmp_b.bmp";
 			
 			_createDir(compressedDir);
 			_createDir(decompressedDir);
+			_createDir(differencesDir);
 		}
 		
 		private static string _getRootDirectory()
