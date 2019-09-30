@@ -17,9 +17,16 @@ namespace ImageProcessing.Tasks
 		public static string _dImageJpeg;
 
 		public static string _diffJpegBmpAll;
+		public static string _diffJpegBmpAllInv;
+		
 		public static string _diffJpegBmpR;
+		public static string _diffJpegBmpRInv;
+		
 		public static string _diffJpegBmpG;
+		public static string _diffJpegBmpGInv;
+		
 		public static string _diffJpegBmpB;
+		public static string _diffJpegBmpBInv;
 
 		public static void Init()
 		{
@@ -60,9 +67,16 @@ namespace ImageProcessing.Tasks
 			_dImageJpeg = decompressedDir + $"jpeg_decoded_{imageName}.bmp";
 
 			_diffJpegBmpAll = differencesDir + "diff_jpeg_bmp.bmp";
+			_diffJpegBmpAllInv = differencesDir + "inv_diff_jpeg_bmp.bmp";
+			
 			_diffJpegBmpR = differencesDir + "diff_jpeg_bmp_r.bmp";
+			_diffJpegBmpRInv = differencesDir + "inv_diff_jpeg_bmp_r.bmp";
+			
 			_diffJpegBmpG = differencesDir + "diff_jpeg_bmp_g.bmp";
+			_diffJpegBmpGInv = differencesDir + "inv_diff_jpeg_bmp_g.bmp";
+			
 			_diffJpegBmpB = differencesDir + "diff_jpeg_bmp_b.bmp";
+			_diffJpegBmpBInv = differencesDir + "inv_diff_jpeg_bmp_b.bmp";
 			
 			_createDir(compressedDir);
 			_createDir(decompressedDir);

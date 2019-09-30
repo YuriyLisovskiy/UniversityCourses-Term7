@@ -53,6 +53,16 @@ namespace ImageProcessing
 				Images._diffJpegBmpB,
 				false
 			);
+			DifferenceTask.CreateDifference(
+				Images._inImage24Bit,
+				Images._cImageJpeg,
+				Images._diffJpegBmpAllInv,
+				Images._diffJpegBmpRInv,
+				Images._diffJpegBmpGInv,
+				Images._diffJpegBmpBInv,
+				true,
+				false
+			);
 		}
 		
 		private static void Main()

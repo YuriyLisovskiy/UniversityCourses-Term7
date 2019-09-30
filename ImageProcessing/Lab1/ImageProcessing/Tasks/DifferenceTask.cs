@@ -15,9 +15,13 @@ namespace ImageProcessing.Tasks
 			return inv ? Color.FromArgb(255 - r, 255 - g, 255 - b) : Color.FromArgb(r, g, b);
 		}
 
-		public static void CreateDifference(string leftImage, string rightImage, string resultImage, string rImage, string gImage, string bImage, bool inv)
+		public static void CreateDifference(string leftImage, string rightImage, string resultImage, string rImage, string gImage, string bImage, bool inv, bool log = true)
 		{
-			Console.WriteLine("Обчислення різниці JPEG зображення та BMP (початкового)...");
+			if (log)
+			{
+				Console.WriteLine("Обчислення різниці JPEG зображення та BMP (початкового)...");	
+			}
+			
 			using (var left = new Bitmap(leftImage))
 			using (var right = new Bitmap(rightImage))
 			{
@@ -78,17 +82,19 @@ namespace ImageProcessing.Tasks
 					}
 					
 					diff.Save(resultImage, ImageFormat.Bmp);
-					
-					Console.WriteLine($"Загальні втрати пікселів: {totalLostPixels}");
-					
+
+					if (log)
+					{
+						Console.WriteLine($"Загальні втрати пікселів: {totalLostPixels}");
+						Console.WriteLine("Втрати по каналах:");
+						Console.WriteLine($" - червоний: {lostRedPixels}");
+						Console.WriteLine($" - зелений:  {lostGreenPixels}");
+						Console.WriteLine($" - синій:    {lostBluePixels}");
+					}
+
 					rBitmap.Save(rImage, ImageFormat.Bmp);
 					gBitmap.Save(gImage, ImageFormat.Bmp);
 					bBitmap.Save(bImage, ImageFormat.Bmp);
-					
-					Console.WriteLine("Втрати по каналах:");
-					Console.WriteLine($" - червоний: {lostRedPixels}");
-					Console.WriteLine($" - зелений:  {lostGreenPixels}");
-					Console.WriteLine($" - синій:    {lostBluePixels}");
 				}
 			}
 		}
