@@ -24,6 +24,11 @@ namespace ImageProcessing.Compression
 				throw new ArgumentException("The image must be in 8-bit pixel format", nameof(bmp));
 			}
 
+			if (bmp.InfoHeader.Compression != 0)
+			{
+				throw new ArgumentException("The image already has a compression", nameof(bmp));
+			}
+
 			var data = bmp.ImageData.GetBytes();
 			var result = new List<byte>();
 			var stride = bmp.InfoHeader.Width;
@@ -99,6 +104,11 @@ namespace ImageProcessing.Compression
 			if (bmp.InfoHeader.BitCount != 8)
 			{
 				throw new ArgumentException("The image must be in 8-bit pixel format", nameof(bmp));
+			}
+			
+			if (bmp.InfoHeader.Compression != 1)
+			{
+				throw new ArgumentException("The image has invalid compression", nameof(bmp));
 			}
 
 			var data = bmp.ImageData.GetBytes();
