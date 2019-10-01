@@ -9,6 +9,10 @@ namespace ImageProcessing.Types
 	{
 		public JpgHeader Header;
 		public JpgImageData ImageData;
+
+		public Jpeg()
+		{
+		}
 		
 		public Jpeg(string path)
 		{
@@ -43,6 +47,8 @@ namespace ImageProcessing.Types
 		
 		private void _readBody(BinaryReader reader)
 		{
+			var soi = BitConverter.ToUInt16(Header.Soi);
+
 			ImageData = new JpgImageData(
 				reader.ReadBytes((int) (reader.BaseStream.Length - BitConverter.ToInt16(Header.Soi)))
 			);
