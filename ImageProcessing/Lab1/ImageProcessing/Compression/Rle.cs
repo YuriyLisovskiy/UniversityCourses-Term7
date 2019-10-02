@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
 using ImageProcessing.Types;
+using Ut = ImageProcessing.Tasks.Utils;
 
 namespace ImageProcessing.Compression
 {
@@ -158,14 +159,33 @@ namespace ImageProcessing.Compression
 		
 		public override void Compress(string outputFile)
 		{
+			Read(InputFile);
+			
 			var bitmap = new Bitmap8(InputFile);
-			File.WriteAllBytes(outputFile, _encodeBitmap(bitmap));
+			
+			Stopwatch.Restart();
+			var encoded = _encodeBitmap(bitmap);
+			Stopwatch.Stop();
+			Timing.CompressionTime = Ut.TicksToMicroseconds(Stopwatch.ElapsedTicks);
+			
+			File.WriteAllBytes(outputFile, encoded);
+			
+			Stopwatch.Restart();
+			Write(outputFile);
+			Stopwatch.Stop();
+			Timing.WritingTime = Ut.TicksToMicroseconds(Stopwatch.ElapsedTicks);
 		}
 		
 		public override void Decompress(string outputFile)
 		{
 			var bitmap = new Bitmap8(InputFile);
-			File.WriteAllBytes(outputFile, _decodeBitmap(bitmap));
+			
+			Stopwatch.Restart();
+			var encoded = _decodeBitmap(bitmap);
+			Stopwatch.Stop();
+			Timing.DecompressionTime = Ut.TicksToMicroseconds(Stopwatch.ElapsedTicks);
+			
+			File.WriteAllBytes(outputFile, encoded);
 		}
 	}
 }

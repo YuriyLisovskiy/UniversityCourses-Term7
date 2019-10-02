@@ -9,6 +9,8 @@ namespace ImageProcessing.Tasks
 		private readonly string _name;
 		private long _compressionTime;
 		private long _decompressionTime;
+		private long _readingTime;
+		private long _writingTime;
 		private long _compressedFileSize;
 		private long _originalFileSize;
 
@@ -29,7 +31,10 @@ namespace ImageProcessing.Tasks
 		public void Run()
 		{
 			Console.WriteLine($"{_name} task running...");
-			_compressionTime = Utils.MeasureInMicroseconds(_compressionTask);
+			_compressionTask();
+			_compressionTime = _algorithm.Timing.CompressionTime;
+			_readingTime = _algorithm.Timing.ReadingTime;
+			_writingTime = _algorithm.Timing.WritingTime;
 			_decompressionTime = Utils.MeasureInMicroseconds(_decompressionTask);
 			_compressedFileSize = Utils.GetFileSizeInBytes(_outCompressed);
 			_originalFileSize = Utils.GetFileSizeInBytes(_original);
@@ -40,7 +45,7 @@ namespace ImageProcessing.Tasks
 		{
 			return new object[]
 			{
-				_name, _compressionTime, _decompressionTime,
+				_name, _compressionTime, _decompressionTime, _readingTime, _writingTime,
 				_compressedFileSize, _originalFileSize - _compressedFileSize
 			};
 		}

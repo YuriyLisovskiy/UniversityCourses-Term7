@@ -6,7 +6,7 @@ namespace ImageProcessing.Tasks
 {
 	public static class Utils
 	{
-		private static long _ticksToMicroseconds(long ticks)
+		public static long TicksToMicroseconds(long ticks)
 		{
 			return ticks / 1000;
 		}
@@ -17,7 +17,7 @@ namespace ImageProcessing.Tasks
 			stopwatch.Start();
 			action();
 			stopwatch.Stop();
-			return _ticksToMicroseconds(stopwatch.ElapsedTicks);
+			return TicksToMicroseconds(stopwatch.ElapsedTicks);
 		}
 
 		public static long GetFileSizeInBytes(string path)

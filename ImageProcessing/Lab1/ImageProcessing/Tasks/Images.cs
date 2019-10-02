@@ -28,6 +28,8 @@ namespace ImageProcessing.Tasks
 		public static string _diffJpegBmpB;
 		public static string _diffJpegBmpBInv;
 
+		public static string _tmpImage;
+
 		public static void Init()
 		{
 			var rootDir = _getRootDirectory();
@@ -77,6 +79,8 @@ namespace ImageProcessing.Tasks
 			
 			_diffJpegBmpB = differencesDir + "diff_jpeg_bmp_b.bmp";
 			_diffJpegBmpBInv = differencesDir + "inv_diff_jpeg_bmp_b.bmp";
+
+			_tmpImage = outDir + "tmp.bmp";
 			
 			_createDir(compressedDir);
 			_createDir(decompressedDir);

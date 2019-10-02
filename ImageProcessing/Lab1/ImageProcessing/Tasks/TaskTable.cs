@@ -7,7 +7,7 @@ namespace ImageProcessing.Tasks
 	public class TaskTable
 	{
 		private readonly IEnumerable<Task> _tasks;
-		private const ushort RawLength = 5;
+		private const ushort RawLength = 7;
 		
 		public TaskTable(IEnumerable<Task> tasks)
 		{
@@ -16,12 +16,12 @@ namespace ImageProcessing.Tasks
 
 		public void Draw()
 		{
-			DrawInfo(new []{"Назва методу", "Час кодування,", "Час декодування,", "Розмір,", "Різниця з"});
-			DrawInfo(new []{"стиснення", "мікросекунд", "мікросекунд", "байтів", "оригіналом, байтів"});
+			DrawInfo(new []{"Назва методу", "Час кодування,", "Час декодування,", "Час читання,", "Час запису,", "Розмір,", "Різниця з"});
+			DrawInfo(new []{"стиснення", "мікросекунд", "мікросекунд", "мікросекунд", "мікросекунд", "байтів", "оригіналом, байтів"});
 			DrawLine();
-			DrawInfo(new []{"Без стиснення (8)", null, null, $"{Utils.GetFileSizeInBytes(Images._inImage8Bit),-10:0,0}", null});
+			DrawInfo(new []{"Без стиснення (8)", null, null, null, null, $"{Utils.GetFileSizeInBytes(Images._inImage8Bit),-10:0,0}", null});
 			DrawLine();
-			DrawInfo(new []{"Без стиснення (24)", null, null, $"{Utils.GetFileSizeInBytes(Images._inImage24Bit),-10:0,0}", null});
+			DrawInfo(new []{"Без стиснення (24)", null, null, null, null, $"{Utils.GetFileSizeInBytes(Images._inImage24Bit),-10:0,0}", null});
 			foreach (var task in _tasks)
 			{
 				DrawLine();
@@ -36,6 +36,8 @@ namespace ImageProcessing.Tasks
 				"--------------------",
 				"----------------",
 				"------------------",
+				"--------------",
+				"--------------",
 				"-----------",
 				"--------------------"
 			};
@@ -54,7 +56,7 @@ namespace ImageProcessing.Tasks
 				throw new ArgumentException($"Invalid column length: {RawLength} is required, {array.Count} was given");
 			}
 			
-			Console.WriteLine($"{begin}{array[0] ?? "—",-19}{sep}{array[1] ?? "—",-15}{sep}{array[2] ?? "—",-17}{sep}{array[3] ?? "—",-10:0,0}{sep}{array[4] ?? "—",-19:0,0}{end}");
+			Console.WriteLine($"{begin}{array[0] ?? "—",-19}{sep}{array[1] ?? "—",-15}{sep}{array[2] ?? "—",-17}{sep}{array[3] ?? "—",-13}{sep}{array[4] ?? "—",-13}{sep}{array[5] ?? "—",-10:0,0}{sep}{array[6] ?? "—",-19:0,0}{end}");
 		}
 	}
 }
