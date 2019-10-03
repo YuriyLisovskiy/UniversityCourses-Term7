@@ -2,19 +2,69 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using ImageProcessing.Types;
 
 namespace ImageProcessing.Tasks
 {
 	public static class DifferenceTask
 	{
-		private static Color _calcPixelDiff(Color left, Color right, bool inv)
+		private static Color _calcPixelDiff(Color left, Color right)
 		{
-			var r = Math.Abs(right.R - left.R);
-			var g = Math.Abs(right.G - left.G);
-			var b = Math.Abs(right.B - left.B);
-			return inv ? Color.FromArgb(255 - r, 255 - g, 255 - b) : Color.FromArgb(r, g, b);
+			return Color.FromArgb(
+				Math.Abs(right.R - left.R),
+				Math.Abs(right.G - left.G),
+				Math.Abs(right.B - left.B)
+			);
 		}
 
+		private static Color _invertPixel(Color pixel)
+		{
+			return Color.FromArgb(255 - pixel.R, 255 - pixel.G, 255 - pixel.B);
+		}
+
+		private static HcvColor _rgbToHsv(Color color)
+		{
+			int max = Math.Max(color.R, Math.Max(color.G, color.B));
+			int min = Math.Min(color.R, Math.Min(color.G, color.B));
+
+			return new HcvColor
+			{
+				Hue = color.GetHue(),
+				Saturation = (max == 0) ? 0 : 1d - (1d * min / max),
+				Value = max / 255d
+			};
+		}
+
+		private static Color _rgbFromHsv(HcvColor hcvColor)
+		{
+			var hi = Convert.ToInt32(Math.Floor(hcvColor.Hue / 60)) % 6;
+			var f = hcvColor.Hue / 60 - Math.Floor(hcvColor.Hue / 60);
+
+			hcvColor.Saturation = Math.Min(1, hcvColor.Saturation);
+			
+			hcvColor.Value *= 255;
+			var v = Convert.ToInt32(hcvColor.Value);
+			var p = Convert.ToInt32(hcvColor.Value * (1 - hcvColor.Saturation));
+			var q = Convert.ToInt32(hcvColor.Value * (1 - f * hcvColor.Saturation));
+			var t = Convert.ToInt32(hcvColor.Value * (1 - (1 - f) * hcvColor.Saturation));
+
+			switch (hi)
+			{
+				case 0:
+					return Color.FromArgb(255, v, t, p);
+				case 1:
+					return Color.FromArgb(255, q, v, p);
+				case 2:
+					return Color.FromArgb(255, p, v, t);
+				case 3:
+					return Color.FromArgb(255, p, q, v);
+				case 4:
+					return Color.FromArgb(255, t, p, v);
+				default:
+					return Color.FromArgb(255, v, p, q);
+			}
+		}
+		
 		public static void CreateDifference(string leftImage, string rightImage, string resultImage, string rImage, string gImage, string bImage, bool inv, bool log = true)
 		{
 			if (log)
@@ -50,16 +100,40 @@ namespace ImageProcessing.Tasks
 					{
 						for (var x = 0; x < right.Width; x++)
 						{
-							var diffPixel = _calcPixelDiff(left.GetPixel(x, y), right.GetPixel(x, y), inv);
-							diff.SetPixel(x, y, diffPixel);
-							rBitmap.SetPixel(x, y, Color.FromArgb(diffPixel.R, zero, zero));
-							gBitmap.SetPixel(x, y, Color.FromArgb(zero, diffPixel.G, zero));
-							bBitmap.SetPixel(x, y, Color.FromArgb(zero, zero, diffPixel.B));
+							var diffPixel = _calcPixelDiff(left.GetPixel(x, y), right.GetPixel(x, y));
+
+							var hasBadR = diffPixel.R != 0;
+							var hasBadG = diffPixel.G != 0;
+							var hasBadB = diffPixel.B != 0;
+
+							const double intensify = 20;
+
+							if (inv)
+							{
+								diffPixel = _invertPixel(diffPixel);
+							}
 							
-							var hasBadR = diffPixel.R != zero;
-							var hasBadG = diffPixel.G != zero;
-							var hasBadB = diffPixel.B != zero;
+							var hsvRgbPx = _rgbToHsv(diffPixel);
+							hsvRgbPx.Saturation *= intensify;
+							var diffPixelFinal = _rgbFromHsv(hsvRgbPx);
 							
+							var hsvRPx = _rgbToHsv(Color.FromArgb(diffPixel.R, zero, zero));
+							hsvRPx.Saturation *= intensify;
+							var rPx = _rgbFromHsv(hsvRPx);
+
+							var hsvGPx = _rgbToHsv(Color.FromArgb(zero, diffPixel.G, zero));
+							hsvGPx.Saturation *= intensify;
+							var gPx = _rgbFromHsv(hsvGPx);
+
+							var hsvBPx = _rgbToHsv(Color.FromArgb(zero, zero, diffPixel.B));
+							hsvBPx.Saturation *= intensify;
+							var bPx = _rgbFromHsv(hsvBPx);
+
+							diff.SetPixel(x, y, diffPixelFinal);
+							rBitmap.SetPixel(x, y, rPx);
+							gBitmap.SetPixel(x, y, gPx);
+							bBitmap.SetPixel(x, y, bPx);
+
 							if (hasBadR || hasBadG || hasBadB)
 							{
 								totalLostPixels++;
@@ -85,11 +159,20 @@ namespace ImageProcessing.Tasks
 
 					if (log)
 					{
-						Console.WriteLine($"Загальні втрати пікселів: {totalLostPixels}");
+						Console.WriteLine("Загальні втрати:");
+						Console.WriteLine($" - кількісні: {totalLostPixels}");
+						Console.WriteLine($" - якісні: {totalLostPixels * 100 / (diff.Height * diff.Width)}");
+						
 						Console.WriteLine("Втрати по каналах:");
-						Console.WriteLine($" - червоний: {lostRedPixels}");
-						Console.WriteLine($" - зелений:  {lostGreenPixels}");
-						Console.WriteLine($" - синій:    {lostBluePixels}");
+						
+						Console.WriteLine($" - червоний (кількісні): {lostRedPixels}");
+						Console.WriteLine($" - червоний (якісні): {lostRedPixels * 100 / (diff.Height * diff.Width)}%\n");
+						
+						Console.WriteLine($" - зелений (кількісні):  {lostGreenPixels}");
+						Console.WriteLine($" - зелений (якісні):  {lostGreenPixels * 100 / (diff.Height * diff.Width)}%\n");
+						
+						Console.WriteLine($" - синій (кількісні):    {lostBluePixels}");
+						Console.WriteLine($" - синій (якісні):    {lostBluePixels * 100 / (diff.Height * diff.Width)}%");
 					}
 
 					rBitmap.Save(rImage, ImageFormat.Bmp);
