@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace ImageProcessing
 {
@@ -41,7 +40,7 @@ namespace ImageProcessing
 			const string imageName = "image_1";
 			
 			_imagePath = input + $"{imageName}.bmp";
-			_histogramPath = output + $"{imageName}_histogram.txt";
+			_histogramPath = output + "image_histogram.txt";
 		}
 		
 		private static void Main()
