@@ -45,7 +45,7 @@ namespace ImageProcessing.Tasks
 			var decompressedDir = outDir + "Decompressed/";
 			var differencesDir = outDir + "Differences/";
 
-			const string imageName = "images_5";
+			const string imageName = "images_12";
 			
 			_inImage8Bit = inputDir + $"8bit_{imageName}.bmp";
 			_inImage24Bit = inputDir + $"24bit_{imageName}.bmp";
