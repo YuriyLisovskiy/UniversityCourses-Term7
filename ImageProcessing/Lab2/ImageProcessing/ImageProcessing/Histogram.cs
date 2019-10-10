@@ -1,18 +1,22 @@
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
+using System.Linq;
 
 namespace ImageProcessing
 {
 	public class Histogram
 	{
-		private Bitmap _bitmap;
+		private readonly Bitmap _bitmap;
 		private Dictionary<uint, ulong> _dataR;
 		private Dictionary<uint, ulong> _dataG;
 		private Dictionary<uint, ulong> _dataB;
+
+		private StreamWriter _file;
 		
-		public Histogram(Bitmap bmp)
+		public Histogram(string path)
 		{
-			_bitmap = bmp;
+			_bitmap = new Bitmap(path);
 		}
 
 		public void Calc()
@@ -32,7 +36,21 @@ namespace ImageProcessing
 
 		public void Write(string path)
 		{
-			// TODO: write data to files
+			_file = new StreamWriter(path);
+			_writeDict(_dataR);
+			_writeDict(_dataG);
+			_writeDict(_dataB);
+			_file.Close();
+		}
+
+		private void _writeDict(IReadOnlyDictionary<uint, ulong> dict)
+		{
+			foreach (var (key, value) in dict)
+			{
+				_file.Write($"{key},{value}{(dict[key] == dict.Last().Value ? "" : ";")}");
+			}
+			
+			_file.Write("\n");
 		}
 
 		private void _initDictionaries()
