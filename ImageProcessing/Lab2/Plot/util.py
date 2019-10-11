@@ -3,8 +3,8 @@ import os
 
 FILE_NAME = 'image_histogram'
 
-BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/ImageProcessing/ImageProcessing/Output/'
-PLOT_FILE = BASE + '{}.txt'.format(FILE_NAME)
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + '/ImageProcessing/ImageProcessing/'
+PLOT_FILE = BASE + 'Output/{}.txt'.format(FILE_NAME)
 
 kwargs = dict(alpha=0.5, bins=100, density=True, stacked=True)
 
