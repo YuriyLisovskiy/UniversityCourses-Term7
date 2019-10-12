@@ -6,7 +6,7 @@ from PyQt5.QtCore import QThreadPool
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QAction, QFileDialog, QMainWindow
 
 from app.ui import util
-from app.settings import BASE
+from app.settings import OUTPUT
 from app.core.worker import Worker
 from app.core import img_processing as ipc
 from app.ui.widgets import HistogramWidget, ImageLabel
@@ -57,10 +57,9 @@ class Window(QMainWindow):
 
 	def equalize(self, img_path):
 		def calc():
-			output_dir = '{}/Output/'.format(BASE)
-			if not os.path.exists(output_dir):
-				os.makedirs(output_dir)
-			img_out = output_dir + '_equalized.'.join(img_path.split('/')[-1].split('.'))
+			if not os.path.exists(OUTPUT):
+				os.makedirs(OUTPUT)
+			img_out = OUTPUT + '_equalized.'.join(img_path.split('/')[-1].split('.'))
 			img = mp_img.imread(img_path)
 			new_img, r_hist, g_hist, b_hist, r_eq_hist, g_eq_hist, b_eq_hist = ipc.rgb_equalize(img)
 			mp_img.imsave(img_out, new_img)
