@@ -61,9 +61,9 @@ class Window(QMainWindow):
 				os.makedirs(OUTPUT)
 			img_out = OUTPUT + '_equalized.'.join(img_path.split('/')[-1].split('.'))
 			img = mp_img.imread(img_path)
-			new_img, r_hist, g_hist, b_hist, r_eq_hist, g_eq_hist, b_eq_hist = ipc.rgb_equalize(img)
+			new_img = ipc.equalize_rgb(img)
 			mp_img.imsave(img_out, new_img)
-			return img_out, r_hist, g_hist, b_hist, r_eq_hist, g_eq_hist, b_eq_hist
+			return img_out, ipc.calc_hist(img, 'r'), ipc.calc_hist(img, 'g'), ipc.calc_hist(img, 'b'), ipc.calc_hist(new_img, 'r'), ipc.calc_hist(new_img, 'g'), ipc.calc_hist(new_img, 'b')
 
 		worker = Worker(calc)
 		worker.signals.error.connect(self.err_handler)
