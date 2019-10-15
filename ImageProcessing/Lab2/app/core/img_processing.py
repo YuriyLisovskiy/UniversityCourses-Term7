@@ -1,4 +1,5 @@
 import numpy as np
+from app.core.operators import process, sobel_vertical, sobel_horizontal, prewitt_vertical, prewitt_horizontal
 
 
 def calc_hist(img, opt):
@@ -50,3 +51,11 @@ def equalize_rgb(img):
 			new_img[x, y, 1] = equalized[img[x, y, 1]]
 			new_img[x, y, 2] = equalized[img[x, y, 2]]
 	return new_img
+
+
+def sobel(img_path):
+	return process(img_path, sobel_horizontal, sobel_vertical)
+
+
+def prewitt(img_path):
+	return process(img_path, prewitt_horizontal, prewitt_vertical)

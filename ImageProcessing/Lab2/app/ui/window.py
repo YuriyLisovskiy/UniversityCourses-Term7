@@ -10,6 +10,7 @@ from app.settings import OUTPUT
 from app.core.worker import Worker
 from app.core import img_processing as ipc
 from app.ui.widgets import HistogramWidget, ImageLabel
+from app.core.img_processing import sobel, prewitt
 
 
 class Window(QMainWindow):
@@ -34,6 +35,8 @@ class Window(QMainWindow):
 		self.eq_hist_widget = QTabWidget()
 		self.equalized_image_widget = ImageLabel(self)
 
+		self.is_first_open = True
+
 		self.thread_pool = QThreadPool()
 
 		self.init_ui()
@@ -47,9 +50,6 @@ class Window(QMainWindow):
 		self.central_widget.setLayout(layout)
 
 		self.tabs.addTab(self.img_widget, "Image")
-		self.tabs.addTab(self.hist_widget, "Histogram")
-		self.tabs.addTab(self.equalized_image_widget, "Equalized Image")
-		self.tabs.addTab(self.eq_hist_widget, "Equalized Histogram")
 
 		layout.addWidget(self.tabs)
 
@@ -63,6 +63,13 @@ class Window(QMainWindow):
 			img = mp_img.imread(img_path)
 			new_img = ipc.equalize_rgb(img)
 			mp_img.imsave(img_out, new_img)
+
+			# TODO:
+			sobel_out = OUTPUT + '_sobel.'.join(img_path.split('/')[-1].split('.'))
+			prewitt_out = OUTPUT + '_prewintt.'.join(img_path.split('/')[-1].split('.'))
+			mp_img.imsave(sobel_out, sobel(img_path), cmap='gray')
+			mp_img.imsave(prewitt_out, prewitt(img_path), cmap='gray')
+
 			return img_out, ipc.calc_hist(img, 'r'), ipc.calc_hist(img, 'g'), ipc.calc_hist(img, 'b'), ipc.calc_hist(new_img, 'r'), ipc.calc_hist(new_img, 'g'), ipc.calc_hist(new_img, 'b')
 
 		worker = Worker(calc)
@@ -72,6 +79,11 @@ class Window(QMainWindow):
 
 	# eq_img_path, r_hist, g_hist, b_hist, r_eq_hist, g_eq_hist, b_eq_hist
 	def process_image(self, args):
+		if self.is_first_open:
+			self.tabs.addTab(self.hist_widget, "Histogram")
+			self.tabs.addTab(self.equalized_image_widget, "Equalized Image")
+			self.tabs.addTab(self.eq_hist_widget, "Equalized Histogram")
+			self.is_first_open = False
 		self.equalized_image_widget.set_image(args[0])
 		self.hist_widget.clear()
 		for hist in (
