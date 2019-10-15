@@ -48,7 +48,7 @@ def multiply_3x3_(_filter, _img, i, j, chan):
 	return _filter.dot(y)
 
 
-def process(img_path, x_filter, y_filter):
+def process_op(img_path, x_filter, y_filter):
 	img = np.array(Image.open(img_path)).astype(np.uint8)
 	h, w, d = img.shape
 
@@ -56,16 +56,13 @@ def process(img_path, x_filter, y_filter):
 
 	multiply = multiply_3x3
 
-	# offset by 1
 	for channel in range(d):
 		for i in range(1, h - 1):
 			for j in range(1, w - 1):
 				horizontal_grad = multiply(x_filter, img, i, j, channel)
 				vertical_grad = multiply(y_filter, img, i, j, channel)
 
-				# Edge Magnitude
 				magnitude = np.sqrt(pow(horizontal_grad, 2.0) + pow(vertical_grad, 2.0))
-				# Avoid underflow: clip result
 				gradient_image[i - 1, j - 1, channel] = magnitude
 
 	return gradient_image[:, :, 0] + gradient_image[:, :, 1] + gradient_image[:, :, 2]
