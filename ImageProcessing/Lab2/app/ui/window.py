@@ -3,7 +3,7 @@ import matplotlib.image as mp_img
 
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import QThreadPool, Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QAction, QFileDialog, QMainWindow
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QAction, QFileDialog, QMainWindow, QHBoxLayout
 
 from app.ui import util
 from app.settings import OUTPUT
@@ -31,19 +31,22 @@ class Window(QMainWindow):
 		self.tabs = QTabWidget()
 		self.img_widget = ImageLabel(self)
 
-		self.btn_calc_hist = QPushButton('Histogram', 90, 30, self.calc_hist_event)
-		self.btn_calc_hist.setEnabled(False)
+		self.action_calc_hist = None
+		self.action_calc_eq_hist = None
 
-		self.btn_equalize = QPushButton('Equalize', 90, 30, self.equalize_event)
-		self.btn_equalize.setEnabled(False)
+		self.action_equalize = None
 
 		self.hist_widget = QTabWidget()
 		self.eq_hist_widget = QTabWidget()
 		self.equalized_image_widget = ImageLabel(self)
 
 		self.is_first_equalization = True
+		self.image = None
+		self.image_path = None
 		self.current_image = None
 		self.current_image_path = None
+		self.equalized_image = None
+		self.equalized_image_path = None
 
 		self.thread_pool = QThreadPool()
 
@@ -51,49 +54,64 @@ class Window(QMainWindow):
 
 	# noinspection PyArgumentList
 	def init_ui(self):
-		self.setup_file_menu(self.menuBar())
+		self.setup_menu(self.menuBar())
 
 		layout = QVBoxLayout()
 
 		self.central_widget.setLayout(layout)
 
-		img_layout = QVBoxLayout()
-		img_layout.addWidget(self.img_widget)
-		img_layout.addWidget(self.btn_calc_hist, alignment=Qt.AlignHCenter)
-		img_layout.addWidget(self.btn_equalize, alignment=Qt.AlignHCenter)
-		widget = QWidget()
-		widget.setLayout(img_layout)
+		self.tabs.addTab(self.img_widget, 'Image')
 
-		self.tabs.addTab(widget, "Image")
+		# noinspection PyUnresolvedReferences
+		self.tabs.currentChanged.connect(self.tab_changed)
 
 		layout.addWidget(self.tabs)
 
 		self.setCentralWidget(self.central_widget)
 
+	def tab_changed(self, i):
+		if i == 0:
+			self.current_image = self.image
+			self.current_image_path = self.image_path
+			self.action_equalize.setEnabled(True)
+		else:
+			self.current_image = self.equalized_image
+			self.current_image_path = self.equalized_image_path
+			self.action_equalize.setEnabled(False)
+
 	def open_img_event(self):
+		options = QFileDialog.Options()
+		# fileName = QFileDialog.getOpenFileName(self, "Open File", QDir.currentPath())
+		img_path, _ = QFileDialog.getOpenFileName(
+			self,
+			'QFileDialog.getOpenFileName()',
+			'',
+			'Images (*.bmp)',
+			options=options
+		)
+
 		# noinspection PyArgumentList
-		img_path, second = QFileDialog.getOpenFileName()
+		# img_path, _ = QFileDialog.getOpenFileName()
 
-		print((img_path, second))
-
-		self.img_widget.set_image(img_path)
-
-		worker = Worker(lambda: (mp_img.imread(img_path), img_path))
-		worker.signals.error.connect(self.err_handler)
-		worker.signals.tuple_success.connect(self.open_img_success)
-		self.thread_pool.start(worker)
+		if img_path:
+			self.img_widget.set_image(img_path)
+			worker = Worker(lambda: (mp_img.imread(img_path), img_path))
+			worker.signals.error.connect(self.err_handler)
+			worker.signals.tuple_success.connect(self.open_img_success)
+			self.thread_pool.start(worker)
 
 	def open_img_success(self, args):
-		self.current_image = args[0]
-		self.current_image_path = args[1]
-		self.btn_calc_hist.setEnabled(True)
-		self.btn_equalize.setEnabled(True)
+		self.current_image = self.image = args[0]
+		self.current_image_path = self.image_path = args[1]
+		self.action_calc_hist.setEnabled(True)
+		self.action_equalize.setEnabled(True)
 
 	def calc_hist_event(self):
 		def inner():
 			img_name = self.current_image_path
 			img = self.current_image
 			return (img_name, (
+				(ipc.calc_avg_hist(img), 'black', 'Average'),
 				(ipc.calc_hist(img, 'r'), 'r', 'Red'),
 				(ipc.calc_hist(img, 'g'), 'g', 'Green'),
 				(ipc.calc_hist(img, 'b'), 'b', 'Blue')
@@ -111,7 +129,7 @@ class Window(QMainWindow):
 		for hist in args[1]:
 			hist_widget = HistogramWidget()
 			hist_widget.set_hist(hist)
-			self.hist_widget.addTab(hist_widget, hist[1])
+			self.hist_widget.addTab(hist_widget, hist[2])
 
 		if not self.hist_widget.isVisible():
 			self.hist_widget.setWindowFlags(self.hist_widget.windowFlags() | Qt.Window)
@@ -132,19 +150,20 @@ class Window(QMainWindow):
 			# mp_img.imsave(sobel_out, sobel(img_path), cmap='gray')
 			# mp_img.imsave(prewitt_out, prewitt(img_path), cmap='gray')
 
-			return img_out
+			return new_img, img_out
 
 		worker = Worker(inner)
 		worker.signals.error.connect(self.err_handler)
 		worker.signals.tuple_success.connect(self.equalize_event_success)
 		self.thread_pool.start(worker)
 
-	# eq_img_path, r_hist, g_hist, b_hist, r_eq_hist, g_eq_hist, b_eq_hist
-	def equalize_event_success(self, img_path):
+	def equalize_event_success(self, args):
 		if self.is_first_equalization:
 			self.tabs.addTab(self.equalized_image_widget, "Equalized Image")
 			self.is_first_equalization = False
-		self.equalized_image_widget.set_image(img_path)
+		self.equalized_image_widget.set_image(args[1])
+		self.equalized_image = args[0]
+		self.equalized_image_path = args[1]
 
 	def err_handler(self, msg):
 		util.popup_err(self, msg)
@@ -163,6 +182,14 @@ class Window(QMainWindow):
 		action.triggered.connect(fn)
 		return action
 
-	def setup_file_menu(self, main_menu):
+	def setup_menu(self, main_menu):
 		file_menu = main_menu.addMenu('&File')
 		file_menu.addAction(self.create_action(self, 'Open...', self.open_img_event, 'Ctrl+O'))
+
+		self.action_equalize = self.create_action(self, 'Equalize image...', self.equalize_event, 'Ctrl+E')
+		self.action_equalize.setEnabled(False)
+		file_menu.addAction(self.action_equalize)
+
+		self.action_calc_hist = self.create_action(self, 'Calc histogram...', self.calc_hist_event, 'Ctrl+H')
+		self.action_calc_hist.setEnabled(False)
+		file_menu.addAction(self.action_calc_hist)
