@@ -1,5 +1,7 @@
 import numpy as np
-from app.core.operators import process_op, sobel_vertical, sobel_horizontal, prewitt_vertical, prewitt_horizontal
+import matplotlib.image as mp_img
+
+from app.core import operators as ops
 
 
 def calc_hist(img, opt):
@@ -53,9 +55,13 @@ def equalize_rgb(img):
 	return new_img
 
 
-def sobel(img_path):
-	return process_op(img_path, sobel_horizontal, sobel_vertical)
+def sobel(img):
+	return ops.process_op(img, ops.sobel_horizontal, ops.sobel_vertical)
 
 
-def prewitt(img_path):
-	return process_op(img_path, prewitt_horizontal, prewitt_vertical)
+def prewitt(img):
+	return ops.process_op(img, ops.prewitt_horizontal, ops.prewitt_vertical)
+
+
+def save_gray(_path, img):
+	mp_img.imsave(_path, img, cmap='gray')

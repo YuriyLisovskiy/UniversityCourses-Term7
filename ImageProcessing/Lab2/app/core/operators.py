@@ -1,6 +1,4 @@
 import numpy as np
-from PIL import Image
-import matplotlib.pyplot as plt
 
 # Sobel's filters
 sobel_horizontal = np.array([
@@ -27,6 +25,10 @@ prewitt_vertical = np.array([
 ])
 
 
+def multiply_2x2(_filter, _img, i, j, chan):
+	return 0
+
+
 def multiply_3x3(_filter, _img, i, j, chan):
 	return (_filter[0, 0] * _img[i - 1, j - 1, chan]) + \
 		(_filter[0, 1] * _img[i - 1, j, chan]) + \
@@ -48,14 +50,14 @@ def multiply_3x3_(_filter, _img, i, j, chan):
 	return _filter.dot(y)
 
 
-def process_op(img_path, x_filter, y_filter):
-	img = np.array(Image.open(img_path)).astype(np.uint8)
+def process_op(img, x_filter, y_filter):
+	assert len(x_filter) == len(y_filter)
 	h, w, d = img.shape
-
 	gradient_image = np.zeros((h, w, d))
-
-	multiply = multiply_3x3
-
+	multiply = {
+		2: multiply_2x2,
+		3: multiply_3x3
+	}[len(x_filter)]
 	for channel in range(d):
 		for i in range(1, h - 1):
 			for j in range(1, w - 1):
@@ -66,9 +68,3 @@ def process_op(img_path, x_filter, y_filter):
 				gradient_image[i - 1, j - 1, channel] = magnitude
 
 	return gradient_image[:, :, 0] + gradient_image[:, :, 1] + gradient_image[:, :, 2]
-
-
-def show(img):
-	plt.figure()
-	plt.imshow(img, cmap='gray')
-	plt.show()

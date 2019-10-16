@@ -3,7 +3,7 @@ import matplotlib.image as mp_img
 
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import QThreadPool, Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QAction, QFileDialog, QMainWindow, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QAction, QFileDialog, QMainWindow
 
 from app.ui import util
 from app.settings import OUTPUT
@@ -33,6 +33,8 @@ class Window(QMainWindow):
 
 		self.action_calc_hist = None
 		self.action_calc_eq_hist = None
+		self.action_sobel_mask = None
+		self.action_prewitt_mask = None
 
 		self.action_equalize = None
 
@@ -105,6 +107,8 @@ class Window(QMainWindow):
 		self.current_image_path = self.image_path = args[1]
 		self.action_calc_hist.setEnabled(True)
 		self.action_equalize.setEnabled(True)
+		self.action_sobel_mask.setEnabled(True)
+		self.action_prewitt_mask.setEnabled(True)
 
 	def calc_hist_event(self):
 		def inner():
@@ -165,6 +169,33 @@ class Window(QMainWindow):
 		self.equalized_image = args[0]
 		self.equalized_image_path = args[1]
 
+	def apply_mask_event(self, mask_fn, mask_name):
+		def inner_event():
+			def inner():
+				img = mask_fn(self.current_image)
+				out_path = OUTPUT + '_{}.'\
+					.format(mask_name)\
+					.join(self.current_image_path.split('/')[-1].split('.'))
+				ipc.save_gray(out_path, img)
+				return out_path, mask_name
+			worker = Worker(inner)
+			worker.signals.error.connect(self.err_handler)
+			worker.signals.tuple_success.connect(self.apply_mask_event_success)
+			self.thread_pool.start(worker)
+		return inner_event
+
+	def apply_mask_event_success(self, args):
+		widget = ImageLabel(self)
+		widget.set_image(args[0])
+		widget.setWindowFlags(widget.windowFlags() | Qt.Window)
+
+		img_path = args[0].split('/')
+		if 'home' in img_path:
+			idx = img_path.index('home')
+			img_path = ['~'] + img_path[idx + 2:]
+		widget.setWindowTitle('{} | {}'.format(args[1].title(), '/'.join(img_path)))
+		widget.show()
+
 	def err_handler(self, msg):
 		util.popup_err(self, msg)
 
@@ -184,12 +215,29 @@ class Window(QMainWindow):
 
 	def setup_menu(self, main_menu):
 		file_menu = main_menu.addMenu('&File')
-		file_menu.addAction(self.create_action(self, 'Open...', self.open_img_event, 'Ctrl+O'))
 
-		self.action_equalize = self.create_action(self, 'Equalize image...', self.equalize_event, 'Ctrl+E')
+		file_menu.addAction(self.create_action(self, '&Open...', self.open_img_event, 'Ctrl+O'))
+
+		self.action_equalize = self.create_action(self, '&Equalize...', self.equalize_event, 'Ctrl+E')
 		self.action_equalize.setEnabled(False)
 		file_menu.addAction(self.action_equalize)
 
-		self.action_calc_hist = self.create_action(self, 'Calc histogram...', self.calc_hist_event, 'Ctrl+H')
+		file_menu.addSeparator()
+
+		self.action_calc_hist = self.create_action(self, '&Calculate histogram', self.calc_hist_event, 'Ctrl+H')
 		self.action_calc_hist.setEnabled(False)
 		file_menu.addAction(self.action_calc_hist)
+
+		mask_menu = main_menu.addMenu('&Mask')
+
+		self.action_prewitt_mask = self.create_action(
+			self, '&Prewitt mask...', self.apply_mask_event(prewitt, prewitt.__name__), 'Ctrl+P'
+		)
+		self.action_prewitt_mask.setEnabled(False)
+		mask_menu.addAction(self.action_prewitt_mask)
+
+		self.action_sobel_mask = self.create_action(
+			self, '&Sobel mask...', self.apply_mask_event(sobel, sobel.__name__), 'Ctrl+S'
+		)
+		self.action_sobel_mask.setEnabled(False)
+		mask_menu.addAction(self.action_sobel_mask)
