@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.image as mp_img
 
-from app.core import operators as ops
+from app.core import masks
 
 
 def calc_hist(img, opt):
@@ -55,12 +55,51 @@ def equalize_rgb(img):
 	return new_img
 
 
+def calc_grad_2x2(_filter, _img, i, j, chan):
+
+	# TODO!!!
+
+	return 0
+
+
+def calc_grad_3x3(_filter, _img, i, j, chan):
+	return (_filter[0, 0] * _img[i - 1, j - 1, chan]) + \
+		(_filter[0, 1] * _img[i - 1, j, chan]) + \
+		(_filter[0, 2] * _img[i - 1, j + 1, chan]) + \
+		(_filter[1, 0] * _img[i, j - 1, chan]) + \
+		(_filter[1, 1] * _img[i, j, chan]) + \
+		(_filter[1, 2] * _img[i, j + 1, chan]) + \
+		(_filter[2, 0] * _img[i + 1, j - 1, chan]) + \
+		(_filter[2, 1] * _img[i + 1, j, chan]) + \
+		(_filter[2, 2] * _img[i + 1, j + 1, chan])
+
+
+def process_op(img, x_filter, y_filter):
+	assert len(x_filter) == len(y_filter)
+	h, w, d = img.shape
+	gradient_image = np.zeros((h, w, d))
+	multiply = {
+		2: calc_grad_2x2,
+		3: calc_grad_3x3
+	}[len(x_filter)]
+	for channel in range(d):
+		for i in range(1, h - 1):
+			for j in range(1, w - 1):
+				horizontal_grad = multiply(x_filter, img, i, j, channel)
+				vertical_grad = multiply(y_filter, img, i, j, channel)
+
+				magnitude = np.sqrt(pow(horizontal_grad, 2.0) + pow(vertical_grad, 2.0))
+				gradient_image[i - 1, j - 1, channel] = magnitude
+
+	return gradient_image[:, :, 0] + gradient_image[:, :, 1] + gradient_image[:, :, 2]
+
+
 def sobel(img):
-	return ops.process_op(img, ops.sobel_horizontal, ops.sobel_vertical)
+	return process_op(img, masks.sobel_horizontal, masks.sobel_vertical)
 
 
 def prewitt(img):
-	return ops.process_op(img, ops.prewitt_horizontal, ops.prewitt_vertical)
+	return process_op(img, masks.prewitt_horizontal, masks.prewitt_vertical)
 
 
 def save_gray(_path, img):
