@@ -56,10 +56,10 @@ def equalize_rgb(img):
 
 
 def calc_grad_2x2(_filter, _img, i, j, chan):
-
-	# TODO!!!
-
-	return 0
+	return (_filter[0, 0] * _img[i, j, chan]) + \
+		(_filter[0, 1] * _img[i, j + 1, chan]) + \
+		(_filter[1, 0] * _img[i + 1, j, chan]) + \
+		(_filter[1, 1] * _img[i + 1, j + 1, chan])
 
 
 def calc_grad_3x3(_filter, _img, i, j, chan):
@@ -78,13 +78,13 @@ def process_op(img, x_filter, y_filter):
 	assert len(x_filter) == len(y_filter)
 	h, w, d = img.shape
 	gradient_image = np.zeros((h, w, d))
-	multiply = {
-		2: calc_grad_2x2,
-		3: calc_grad_3x3
+	multiply, start = {
+		2: (calc_grad_2x2, 0),
+		3: (calc_grad_3x3, 1)
 	}[len(x_filter)]
 	for channel in range(d):
-		for i in range(1, h - 1):
-			for j in range(1, w - 1):
+		for i in range(start, h - 1):
+			for j in range(start, w - 1):
 				horizontal_grad = multiply(x_filter, img, i, j, channel)
 				vertical_grad = multiply(y_filter, img, i, j, channel)
 
@@ -100,6 +100,10 @@ def sobel(img):
 
 def prewitt(img):
 	return process_op(img, masks.prewitt_horizontal, masks.prewitt_vertical)
+
+
+def robert(img):
+	return process_op(img, masks.robert_horizontal, masks.robert_vertical)
 
 
 def save_gray(_path, img):

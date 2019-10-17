@@ -9,8 +9,8 @@ from app.ui import util
 from app.settings import OUTPUT
 from app.core.worker import Worker
 from app.core import img_processing as ipc
-from app.ui.widgets import HistogramWidget, ImageLabel, QPushButton
-from app.core.img_processing import sobel, prewitt
+from app.ui.widgets import HistogramWidget, ImageLabel
+from app.core.img_processing import sobel, prewitt, robert
 
 
 class Window(QMainWindow):
@@ -33,8 +33,9 @@ class Window(QMainWindow):
 
 		self.action_calc_hist = None
 		self.action_calc_eq_hist = None
-		self.action_sobel_mask = None
+		self.action_robert_mask = None
 		self.action_prewitt_mask = None
+		self.action_sobel_mask = None
 
 		self.action_equalize = None
 
@@ -72,18 +73,18 @@ class Window(QMainWindow):
 		self.setCentralWidget(self.central_widget)
 
 	def tab_changed(self, i):
-		if i == 0:
-			self.current_image = self.image
-			self.current_image_path = self.image_path
-			self.action_equalize.setEnabled(True)
-		else:
-			self.current_image = self.equalized_image
-			self.current_image_path = self.equalized_image_path
-			self.action_equalize.setEnabled(False)
+		is_original = i == 0
+		self.current_image = self.image if is_original else self.equalized_image
+		self.current_image_path = self.image_path if is_original else self.equalized_image_path
+		self.action_equalize.setEnabled(is_original)
+		self.action_robert_mask.setEnabled(is_original)
+		self.action_sobel_mask.setEnabled(is_original)
+		self.action_prewitt_mask.setEnabled(is_original)
 
 	def open_img_event(self):
 		options = QFileDialog.Options()
-		# fileName = QFileDialog.getOpenFileName(self, "Open File", QDir.currentPath())
+
+		# noinspection PyCallByClass
 		img_path, _ = QFileDialog.getOpenFileName(
 			self,
 			'QFileDialog.getOpenFileName()',
@@ -91,10 +92,6 @@ class Window(QMainWindow):
 			'Images (*.bmp)',
 			options=options
 		)
-
-		# noinspection PyArgumentList
-		# img_path, _ = QFileDialog.getOpenFileName()
-
 		if img_path:
 			self.img_widget.set_image(img_path)
 			worker = Worker(lambda: (mp_img.imread(img_path), img_path))
@@ -107,6 +104,7 @@ class Window(QMainWindow):
 		self.current_image_path = self.image_path = args[1]
 		self.action_calc_hist.setEnabled(True)
 		self.action_equalize.setEnabled(True)
+		self.action_robert_mask.setEnabled(True)
 		self.action_sobel_mask.setEnabled(True)
 		self.action_prewitt_mask.setEnabled(True)
 
@@ -147,15 +145,7 @@ class Window(QMainWindow):
 			img = mp_img.imread(self.current_image_path)
 			new_img = ipc.equalize_rgb(img)
 			mp_img.imsave(img_out, new_img)
-
-			# TODO:
-			# sobel_out = OUTPUT + '_sobel.'.join(img_path.split('/')[-1].split('.'))
-			# prewitt_out = OUTPUT + '_prewintt.'.join(img_path.split('/')[-1].split('.'))
-			# mp_img.imsave(sobel_out, sobel(img_path), cmap='gray')
-			# mp_img.imsave(prewitt_out, prewitt(img_path), cmap='gray')
-
 			return new_img, img_out
-
 		worker = Worker(inner)
 		worker.signals.error.connect(self.err_handler)
 		worker.signals.tuple_success.connect(self.equalize_event_success)
@@ -163,7 +153,7 @@ class Window(QMainWindow):
 
 	def equalize_event_success(self, args):
 		if self.is_first_equalization:
-			self.tabs.addTab(self.equalized_image_widget, "Equalized Image")
+			self.tabs.addTab(self.equalized_image_widget, 'Equalized Image')
 			self.is_first_equalization = False
 		self.equalized_image_widget.set_image(args[1])
 		self.equalized_image = args[0]
@@ -230,14 +220,20 @@ class Window(QMainWindow):
 
 		mask_menu = main_menu.addMenu('&Mask')
 
+		self.action_robert_mask = self.create_action(
+			self, '&Robert\'s mask...', self.apply_mask_event(robert, robert.__name__), 'Ctrl+R'
+		)
+		self.action_robert_mask.setEnabled(False)
+		mask_menu.addAction(self.action_robert_mask)
+
 		self.action_prewitt_mask = self.create_action(
-			self, '&Prewitt mask...', self.apply_mask_event(prewitt, prewitt.__name__), 'Ctrl+P'
+			self, '&Prewitt\'s mask...', self.apply_mask_event(prewitt, prewitt.__name__), 'Ctrl+P'
 		)
 		self.action_prewitt_mask.setEnabled(False)
 		mask_menu.addAction(self.action_prewitt_mask)
 
 		self.action_sobel_mask = self.create_action(
-			self, '&Sobel mask...', self.apply_mask_event(sobel, sobel.__name__), 'Ctrl+S'
+			self, '&Sobel\'s mask...', self.apply_mask_event(sobel, sobel.__name__), 'Ctrl+S'
 		)
 		self.action_sobel_mask.setEnabled(False)
 		mask_menu.addAction(self.action_sobel_mask)
