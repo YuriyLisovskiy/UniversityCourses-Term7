@@ -79,7 +79,7 @@ uncle(Uncle, Person) :-
 	mother(Mother, Person), brother(Uncle, Mother);
 	father(Father, Person), brother(Uncle, Father).
 
-aunt(Uncle, Person) :-
-	mother(Mother, Person), sister(Uncle, Mother);
-	father(Father, Person), sister(Uncle, Father).
+aunt(Aunt, Person) :-
+	mother(Mother, Person), sister(Aunt, Mother);
+	father(Father, Person), sister(Aunt, Father).
 
