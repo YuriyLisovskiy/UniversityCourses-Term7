@@ -1,5 +1,6 @@
 import os
 import matplotlib.image as mp_img
+import matplotlib.colors as colors
 
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import QThreadPool, Qt
@@ -143,7 +144,10 @@ class Window(QMainWindow):
 				os.makedirs(OUTPUT)
 			img_out = OUTPUT + '_equalized.'.join(self.current_image_path.split('/')[-1].split('.'))
 			img = mp_img.imread(self.current_image_path)
-			new_img = ipc.equalize_rgb(img)
+
+			# new_img = ipc.equalize_rgb(img)
+			new_img = ipc.hsi2rgb(ipc.equalize_hsi(ipc.rgb2hsi(img)))   # TODO
+
 			mp_img.imsave(img_out, new_img)
 			return new_img, img_out
 		worker = Worker(inner)
