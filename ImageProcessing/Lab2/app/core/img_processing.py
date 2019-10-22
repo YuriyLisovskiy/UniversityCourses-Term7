@@ -21,18 +21,15 @@ def calc_hist(img, opt):
 
 def calc_hist_hsi(img, opt):
 	channel = {
-		'h': img[:, :, 0],
-		's': img[:, :, 1],
-		'i': img[:, :, 2],
+		'h': 0,
+		's': 1,
+		'i': 2,
 	}[opt]
 	m, n, _ = img.shape
-	hist = {}
+	hist = [0.0] * 256
 	for i in range(m):
 		for j in range(n):
-			color = channel[i, j]
-			if color not in hist:
-				hist[color] = 0
-			hist[color] += 1
+			hist[int(img[i, j, channel] * 255)] += 1
 	return hist
 
 
@@ -53,77 +50,50 @@ def calc_avg_hist(img):
 
 
 def rgb2hsi_px(px):
-	_r, _g, _b = float(px[0]) / 255, float(px[1]) / 255, float(px[2]) / 255
-	min_ = 1.e-6
-	_i = _r + _g + _b
-	if _i == 0:
-		_i += 0.001
-	_i /= 3
-	r = _r / _i
-	g = _g / _i
-	b = _b / _i
-	if _r == _g and _g == _b:
-		_s = 0
-		_h = 0
-	else:
-		w = 0.5 * (_r - _g + _r - _b) / math.sqrt((_r - _g) * (_r - _g) + (_r - _b) * (_g - _b))
-		if w > 1:
-			w = 1
-		elif w < -1:
-			w = -1
-		_h = math.acos(w)
-		if _h < 0:
-			print('H < 0: {}'.format(_h))
-		if _b > _g:
-			_h = 2 * math.pi - _h
-		_s = 1 - 3 * min(_r, _g, _b) / _i
-	return _h, _s, _i
+	eps = 0.00000001
+
+	r, g, b = float(px[0]) / 255, float(px[1]) / 255, float(px[2]) / 255
+
+	# Hue component
+	numerator = 0.5 * ((r - g) + (r - b))
+	denominator = math.sqrt((r - g) ** 2 + (r - b) * (g - b))
+	theta = math.acos(numerator / (denominator + eps))
+	h = theta
+	if b > g:
+		h = 2 * math.pi - h
+
+	# Saturation component
+	num = min(r, g, b)
+	den = r + g + b
+	if den == 0:
+		den = eps
+	s = 1 - 3 * num / den
+	if s == 0:
+		h = 0
+
+	# Intensity component
+	i = (r + g + b) / 3
+
+	return h, s, i
 
 
 def hsi2rgb_px(px):
 	h, s, i = float(px[0]), float(px[1]), float(px[2])
-	if s > 1:
-		s = 1
-	if i > 1:
-		i = 1
-	if s == 0:
-		r = g = b = i
+	if 0 <= h < 2 * math.pi / 3:
+		b = i * (1 - s)
+		r = i * (1 + (s * math.cos(h)) / math.cos(math.pi / 3 - h))
+		g = 3 * i - (r + b)
+	elif 2 * math.pi / 3 <= h < 4 * math.pi / 3:
+		r = i * (1 - s)
+		g = i * (1 + (s * math.cos(h - 2 * math.pi / 3) / math.cos(math.pi / 3 - (h - 2 * math.pi / 3))))
+		b = 3 * i - (r + g)
+	elif 4 * math.pi / 3 <= h <= 2 * math.pi:
+		g = i * (1 - s)
+		b = i * (1 + (s * math.cos(h - 4 * math.pi / 3) / math.cos(math.pi / 3 - (h - 4 * math.pi / 3))))
+		r = 3 * i - (g + b)
 	else:
-		if 0 <= h < 2 * math.pi / 3:
-			b = (1 - s) / 3
-			r = (1 + s * math.cos(h) / math.cos(math.pi / 3 - h)) / 3
-			g = 1 - r - b
-		elif 2 * math.pi / 3 <= h < 4 * math.pi / 3:
-			h -= 2 * math.pi / 3
-			r = (1 - s) / 3
-			g = (1 + s * math.cos(h) / math.cos(math.pi / 3 - h)) / 3
-			b = 1 - r - g
-		elif 4 * math.pi / 3 <= h < 2 * math.pi:
-			h -= 4 * math.pi / 3
-			g = (1 - s) / 3
-			b = (1 + s * math.cos(h) / math.cos(math.pi / 3 - h)) / 3
-			r = 1 - b - g
-		else:
-			raise IndexError('h out of range: {}'.format(h * 180 / math.pi))
-		if r < 0 or g < 0 or b < 0:
-			pass
-			# print('r, g, b: {}, {}, {}\nh, s, i: {}, {}, {}'.format(r, g, b, h, s, i))
-		if r < 0:
-			r = 0
-		if g < 0:
-			g = 0
-		if b < 0:
-			b = 0
-		r = 3 * i * r
-		g = 3 * i * g
-		b = 3 * i * b
-		if r > 1:
-			r = 1
-		if g > 1:
-			g = 1
-		if b > 1:
-			b = 1
-	return int(r * 255), int(g * 255), int(b * 255)
+		raise IndexError('h is out of range: {}'.format(h))
+	return round(r), round(g), round(b)
 
 
 def rgb2hsi(image):
@@ -150,23 +120,20 @@ def equalize_hsi(img):
 	_l = 256
 	h, w, _ = img.shape
 	num_of_pxs = h * w
-	cdf = {}
-	equalized = {}
+	cdf = [0.0] * 256
+	equalized = [0.0] * 256
 	hist = calc_hist_hsi(img, 'i')
 	count = 0
-	for key, value in hist.items():
-		count += value
-		cdf[key] = count / num_of_pxs
-		equalized[key] = round(cdf[key] * (_l - 1))
+	for i in range(len(hist)):
+		count += hist[i]
+		cdf[i] = count / num_of_pxs
+		equalized[i] = round(cdf[i] * (_l - 1))
 	new_img = np.zeros_like(img)
 	for x in range(h):
 		for y in range(w):
-			hsv_px = (
-				img[x, y, 0],
-				img[x, y, 1],
-				equalized[img[x, y, 2]]
-			)
-			new_img[x, y] = hsv_px
+			px = list(img[x, y])
+			px[2] = equalized[int(px[2] * 255)]
+			new_img[x, y] = px
 	return new_img
 
 
