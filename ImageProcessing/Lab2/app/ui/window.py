@@ -1,7 +1,7 @@
 import os
+import platform
+import subprocess
 import matplotlib.image as mp_img
-import matplotlib.colors as colors
-import matplotlib.pyplot as plt
 
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import QThreadPool, Qt
@@ -221,6 +221,34 @@ class Window(QMainWindow):
 		widget.setWindowTitle('{} | {}'.format(args[1].title(), '/'.join(img_path)))
 		widget.show()
 
+	def clear_output_folder_event(self):
+		def inner(initial_folder):
+			for file in os.listdir(initial_folder):
+				file_path = os.path.join(initial_folder, file)
+				if os.path.isfile(file_path):
+					os.unlink(file_path)
+				elif os.path.isdir(file_path):
+					inner(file_path)
+			return initial_folder
+
+		worker = Worker(inner, OUTPUT)
+		worker.signals.error.connect(self.err_handler)
+		worker.signals.param_success.connect(self.clear_output_folder_event_success)
+		self.thread_pool.start(worker)
+
+	def clear_output_folder_event_success(self, folder):
+		util.popup_success(self, 'An output folder "{}" has been cleared.'.format(folder))
+
+	@staticmethod
+	def open_output_dir_event():
+		if platform.system() == 'Windows':
+			# noinspection PyUnresolvedReferences
+			os.startfile(OUTPUT)
+		elif platform.system() == 'Darwin':
+			subprocess.Popen(['open', OUTPUT])
+		else:
+			subprocess.Popen(['xdg-open', OUTPUT])
+
 	def err_handler(self, msg):
 		util.popup_err(self, msg)
 
@@ -242,20 +270,26 @@ class Window(QMainWindow):
 		file_menu = main_menu.addMenu('&File')
 
 		file_menu.addAction(self.create_action(self, '&Open...', self.open_img_event, 'Ctrl+O'))
+		file_menu.addAction(self.create_action(self, 'Open &Output', self.open_output_dir_event))
+
+		file_menu.addSeparator()
+		file_menu.addAction(self.create_action(self, '&Clear output', self.clear_output_folder_event))
+
+		tools_menu = main_menu.addMenu('&Tools')
 
 		self.action_equalize_rgb = self.create_action(self, '&Equalize RGB...', self.equalize_event(False), 'Ctrl+E')
 		self.action_equalize_rgb.setEnabled(False)
-		file_menu.addAction(self.action_equalize_rgb)
+		tools_menu.addAction(self.action_equalize_rgb)
 
 		self.action_equalize_hsi = self.create_action(self, '&Equalize HSI...', self.equalize_event(True), 'Ctrl+W')
 		self.action_equalize_hsi.setEnabled(False)
-		file_menu.addAction(self.action_equalize_hsi)
+		tools_menu.addAction(self.action_equalize_hsi)
 
-		file_menu.addSeparator()
+		tools_menu.addSeparator()
 
 		self.action_calc_hist = self.create_action(self, '&Calculate histogram', self.calc_hist_event, 'Ctrl+H')
 		self.action_calc_hist.setEnabled(False)
-		file_menu.addAction(self.action_calc_hist)
+		tools_menu.addAction(self.action_calc_hist)
 
 		mask_menu = main_menu.addMenu('&Mask')
 

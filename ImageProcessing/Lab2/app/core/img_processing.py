@@ -103,7 +103,7 @@ def rgb2hsi(image):
 		for y in range(width):
 			px = rgb2hsi_px(image[x, y])
 			hsi_image[x, y] = px
-	return np.array(hsi_image)
+	return hsi_image
 
 
 def hsi2rgb(image):
@@ -113,7 +113,7 @@ def hsi2rgb(image):
 		for y in range(width):
 			px = hsi2rgb_px(image[x, y])
 			rgb_image[x, y] = px
-	return np.array(rgb_image)
+	return rgb_image
 
 
 def equalize_hsi(img):
