@@ -78,7 +78,7 @@ def rgb2hsi_px(px):
 
 
 def hsi2rgb_px(px):
-	h, s, i = float(px[0]), float(px[1]), float(px[2])
+	h, s, i = float(px[0]), float(px[1]), float(px[2]) * 255
 	if 0 <= h < 2 * math.pi / 3:
 		b = i * (1 - s)
 		r = i * (1 + (s * math.cos(h)) / math.cos(math.pi / 3 - h))
@@ -117,23 +117,43 @@ def hsi2rgb(image):
 
 
 def equalize_hsi(img):
-	_l = 256
+	hist = calc_hist_hsi(img, 'i')
+	colors_n = len(hist)
 	h, w, _ = img.shape
 	num_of_pxs = h * w
-	cdf = [0.0] * 256
-	equalized = [0.0] * 256
-	hist = calc_hist_hsi(img, 'i')
+	equalized = [0.0] * colors_n
 	count = 0
-	for i in range(len(hist)):
+	for i in range(colors_n):
 		count += hist[i]
-		cdf[i] = count / num_of_pxs
-		equalized[i] = round(cdf[i] * (_l - 1))
+		mean = count / num_of_pxs
+		equalized[i] = round(mean * (colors_n - 1))
 	new_img = np.zeros_like(img)
 	for x in range(h):
 		for y in range(w):
 			px = list(img[x, y])
-			px[2] = equalized[int(px[2] * 255)]
+			px[2] = equalized[int(px[2] * (colors_n - 1))]
 			new_img[x, y] = px
+	return new_img
+
+
+def equalize_hsi2(img):
+	h, w, _ = img.shape
+	num_of_pxs = h * w
+	mean = 0.0
+	for i in range(h):
+		for j in range(w):
+			mean += img[i, j, 2]
+	mean /= num_of_pxs
+	if mean == 0.5:
+		new_img = img
+	else:
+		theta = math.log(0.5, math.e) / math.log(mean, math.e)
+		new_img = np.zeros_like(img)
+		for x in range(h):
+			for y in range(w):
+				px = list(img[x, y])
+				px[2] = (px[2] ** theta)
+				new_img[x, y] = px
 	return new_img
 
 
@@ -141,14 +161,13 @@ def equalize_rgb(img):
 	_l = 256
 	h, w, _ = img.shape
 	num_of_pxs = h * w
-	cdf = [0.0] * 256
 	equalized = [0.0] * 256
 	hist = calc_avg_hist(img)
 	count = 0
 	for i in range(len(hist)):
 		count += hist[i]
-		cdf[i] = count / num_of_pxs
-		equalized[i] = round(cdf[i] * (_l - 1))
+		mean = count / num_of_pxs
+		equalized[i] = round(mean * (_l - 1))
 	new_img = np.zeros_like(img)
 	for x in range(h):
 		for y in range(w):
