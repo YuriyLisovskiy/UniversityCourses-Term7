@@ -3,7 +3,9 @@
 ### Courses:
 * [AI Python](AIPython)
 * [Applied Python Programming](AppliedPythonProgramming)
+* [Functional Programming](FunctionalProgramming)
 * [Image Processing and Multimedia](ImageProcessing)
+* [Logic Programming](LogicProgramming)
 
 #### Author:
 [Yuriy Lisovskiy](https://github.com/YuriyLisovskiy)
