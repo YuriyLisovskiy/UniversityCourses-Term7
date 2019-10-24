@@ -1,4 +1,3 @@
-import colorsys
 import numpy as np
 import matplotlib.image as mp_img
 
@@ -75,6 +74,62 @@ def equalize_gray_scale(img):
 	return new_img
 
 
+def px_rgb2hsv(px):
+	r, g, b = px
+	max_, min_ = max(r, g, b), min(r, g, b)
+	delta = max_ - min_
+
+	# Value (Brightness)
+	v = max_
+
+	# Saturation
+	s = delta / max_
+
+	if min_ == max_:
+		return 0.0, 0.0, v
+
+	# Hue
+	rc = (max_ - r) / delta
+	gc = (max_ - g) / delta
+	bc = (max_ - b) / delta
+	if r == max_:
+		h = bc - gc
+	elif g == max_:
+		h = 2.0 + rc - bc
+	else:
+		h = 4.0 + gc - rc
+	h = (h / 6.0) % 1.0
+
+	return h, s, v
+
+
+def px_hsv2rgb(px):
+	h, s, v = px
+	if s == 0.0:
+		return v, v, v
+
+	k = int(h * 6.0)
+	f = (h * 6.0) - k
+	p = v * (1.0 - s)
+	q = v * (1.0 - s * f)
+	t = v * (1.0 - s * (1.0 - f))
+	k %= 6
+	if k == 0:
+		return v, t, p
+	if k == 1:
+		return q, v, p
+	if k == 2:
+		return p, v, t
+	if k == 3:
+		return p, q, v
+	if k == 4:
+		return t, p, v
+	if k == 5:
+		return v, p, q
+
+	raise ValueError('unable to calculate hsv pixel')
+
+
 def rgb2hsv(img):
 	hsi_image = np.zeros_like(img).astype('float')
 	if len(img.shape) == 3:
@@ -83,7 +138,7 @@ def rgb2hsv(img):
 		height, width = img.shape
 	for x in range(height):
 		for y in range(width):
-			hsi_image[x, y] = colorsys.rgb_to_hsv(*img[x, y])
+			hsi_image[x, y] = px_rgb2hsv(img[x, y])
 	return hsi_image
 
 
@@ -95,7 +150,7 @@ def hsv2rgb(img):
 		height, width = img.shape
 	for x in range(height):
 		for y in range(width):
-			rgb_image[x, y] = colorsys.hsv_to_rgb(*img[x, y])
+			rgb_image[x, y] = px_hsv2rgb(img[x, y])
 	return rgb_image
 
 
@@ -207,17 +262,10 @@ def save_gray(_path, img):
 	mp_img.imsave(_path, img, cmap='gray')
 
 
-"""
+# Quick test region
 if __name__ == '__main__':
+	pass
 
-	from app.settings import INPUT, OUTPUT
-
-	orig = mp_img.imread(INPUT + 'city.bmp')
-	hsv_img = rgb2hsv(orig)
-	equalized = equalize_hsv(hsv_img)
-	new_img = hsv2rgb(equalized)
-	mp_img.imsave(OUTPUT + 'city_hsv_equalized.bmp', new_img)
-"""
 
 """
 def calc_hist_hsi(img, opt):

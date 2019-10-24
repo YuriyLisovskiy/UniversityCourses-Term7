@@ -174,6 +174,16 @@ class Window(QMainWindow):
 				mp_img.imsave(img_out, new_img)
 				return new_img, img_out, hsv
 
+			if hsv:
+				idx = self.tabs.indexOf(self.hsv_equalized_image_widget)
+			else:
+				idx = self.tabs.indexOf(self.rgb_equalized_image_widget)
+
+			if idx != -1:
+				self.tabs.setTabEnabled(idx, False)
+				tab_text = self.tabs.tabText(idx).split()
+				self.tabs.setTabText(idx, ' '.join(tab_text[:len(tab_text)-1]) + ' Calculating...')
+
 			worker = Worker(inner)
 			worker.signals.error.connect(self.err_handler)
 			worker.signals.tuple_success.connect(self.equalize_event_success)
@@ -182,10 +192,14 @@ class Window(QMainWindow):
 		return inner_event
 
 	def equalize_event_success(self, args):
+		else_ = False
 		if args[2]:
 			if self.is_first_equalization_hsv:
-				self.tabs.addTab(self.hsv_equalized_image_widget, 'HSV (Value or Brightness) Equalized')
+				self.tabs.addTab(self.hsv_equalized_image_widget, 'HSV (Brightness) Equalized')
 				self.is_first_equalization_hsv = False
+			else:
+				else_ = True
+				idx = self.tabs.indexOf(self.hsv_equalized_image_widget)
 			self.hsv_equalized_image_widget.set_image(args[1])
 			self.hsv_equalized_image = args[0]
 			self.hsv_equalized_image_path = args[1]
@@ -193,9 +207,17 @@ class Window(QMainWindow):
 			if self.is_first_equalization_rgb:
 				self.tabs.addTab(self.rgb_equalized_image_widget, 'RGB Equalized')
 				self.is_first_equalization_rgb = False
+			else:
+				else_ = True
+				idx = self.tabs.indexOf(self.rgb_equalized_image_widget)
 			self.rgb_equalized_image_widget.set_image(args[1])
 			self.rgb_equalized_image = args[0]
 			self.rgb_equalized_image_path = args[1]
+
+		if else_:
+			self.tabs.setTabEnabled(idx, True)
+			tab_text = self.tabs.tabText(idx).split()
+			self.tabs.setTabText(idx, ' '.join(tab_text[:len(tab_text) - 1]) + ' Equalized')
 
 	def apply_mask_event(self, mask_fn, mask_name):
 		def inner_event():
