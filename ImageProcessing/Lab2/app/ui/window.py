@@ -39,20 +39,20 @@ class Window(QMainWindow):
 		self.action_sobel_mask = None
 
 		self.action_equalize_rgb = None
-		self.action_equalize_hsi = None
+		self.action_equalize_hsv = None
 
 		self.eq_hist_widget = QTabWidget()
-		self.hsi_equalized_image_widget = ImageLabel(self)
+		self.hsv_equalized_image_widget = ImageLabel(self)
 		self.rgb_equalized_image_widget = ImageLabel(self)
 
 		self.is_first_equalization_rgb = True
-		self.is_first_equalization_hsi = True
+		self.is_first_equalization_hsv = True
 		self.image = None
 		self.image_path = None
 		self.current_image = None
 		self.current_image_path = None
-		self.hsi_equalized_image = None
-		self.hsi_equalized_image_path = None
+		self.hsv_equalized_image = None
+		self.hsv_equalized_image_path = None
 		self.rgb_equalized_image = None
 		self.rgb_equalized_image_path = None
 
@@ -79,8 +79,8 @@ class Window(QMainWindow):
 
 	def tab_changed(self, i):
 		tab_title = self.tabs.tabText(i).lower()
-		if 'hsi' in tab_title:
-			data = (self.hsi_equalized_image, self.hsi_equalized_image_path)
+		if 'hsv' in tab_title:
+			data = (self.hsv_equalized_image, self.hsv_equalized_image_path)
 		elif 'rgb' in tab_title:
 			data = (self.rgb_equalized_image, self.rgb_equalized_image_path)
 		else:
@@ -89,7 +89,7 @@ class Window(QMainWindow):
 		self.current_image = data[0]
 		self.current_image_path = data[1]
 		self.action_equalize_rgb.setEnabled(is_original)
-		self.action_equalize_hsi.setEnabled(is_original)
+		self.action_equalize_hsv.setEnabled(is_original)
 		self.action_robert_mask.setEnabled(is_original)
 		self.action_sobel_mask.setEnabled(is_original)
 		self.action_prewitt_mask.setEnabled(is_original)
@@ -117,7 +117,7 @@ class Window(QMainWindow):
 		self.current_image_path = self.image_path = args[1]
 		self.action_calc_hist.setEnabled(True)
 		self.action_equalize_rgb.setEnabled(True)
-		self.action_equalize_hsi.setEnabled(True)
+		self.action_equalize_hsv.setEnabled(True)
 		self.action_robert_mask.setEnabled(True)
 		self.action_sobel_mask.setEnabled(True)
 		self.action_prewitt_mask.setEnabled(True)
@@ -128,10 +128,10 @@ class Window(QMainWindow):
 			img = self.current_image
 			return (img_name, (
 				(ipc.calc_avg_hist(img), 'black', 'Average RGB'),
-				(ipc.calc_hist(img, 'r'), 'r', 'Red'),
-				(ipc.calc_hist(img, 'g'), 'g', 'Green'),
-				(ipc.calc_hist(img, 'b'), 'b', 'Blue'),
-				(ipc.calc_hist_hsi(ipc.rgb2hsi(img), 'i'), 'gray', 'HSI (Intensity)')
+				(ipc.calc_rgb_hist(img, 'r'), 'r', 'Red'),
+				(ipc.calc_rgb_hist(img, 'g'), 'g', 'Green'),
+				(ipc.calc_rgb_hist(img, 'b'), 'b', 'Blue'),
+				(ipc.calc_hsv_hist(ipc.rgb2hsv(img), 'v'), 'gray', 'HSV (Value or Brightness)')
 			))
 
 		worker = Worker(inner)
@@ -152,24 +152,27 @@ class Window(QMainWindow):
 		hist_tab_widget.setWindowFlags(hist_tab_widget.windowFlags() | Qt.Window)
 		hist_tab_widget.show()
 
-	def equalize_event(self, hsi=False):
+	def equalize_event(self, hsv=False):
 		def inner_event():
 			def inner():
 				if not os.path.exists(OUTPUT):
 					os.makedirs(OUTPUT)
-				img_out = OUTPUT + (
-					'_{}_equalized.'.format('hsi' if hsi else 'rgb')
-				).join(self.image_path.split('/')[-1].split('.'))
-				img = mp_img.imread(self.image_path)
 
-				if hsi:
-					equalized = ipc.equalize_hsi2(ipc.rgb2hsi(img))
-					new_img = ipc.hsi2rgb(equalized)  # TODO
+				img = mp_img.imread(self.image_path)
+				if len(img.shape) == 2:
+					typ = 'grayscale'
 				else:
-					new_img = ipc.equalize_rgb(img)
+					typ = 'hsv' if hsv else 'rgb'
+				img_out = OUTPUT + ('_{}_equalized.'.format(typ)).join(self.image_path.split('/')[-1].split('.'))
+				if hsv:
+					img = ipc.rgb2hsv(img)
+
+				new_img = ipc.equalize(img)
+				if hsv:
+					new_img = ipc.hsv2rgb(new_img)
 
 				mp_img.imsave(img_out, new_img)
-				return new_img, img_out, hsi
+				return new_img, img_out, hsv
 
 			worker = Worker(inner)
 			worker.signals.error.connect(self.err_handler)
@@ -180,15 +183,15 @@ class Window(QMainWindow):
 
 	def equalize_event_success(self, args):
 		if args[2]:
-			if self.is_first_equalization_hsi:
-				self.tabs.addTab(self.hsi_equalized_image_widget, 'HSI (Intensity) Equalized')
-				self.is_first_equalization_hsi = False
-			self.hsi_equalized_image_widget.set_image(args[1])
-			self.hsi_equalized_image = args[0]
-			self.hsi_equalized_image_path = args[1]
+			if self.is_first_equalization_hsv:
+				self.tabs.addTab(self.hsv_equalized_image_widget, 'HSV (Value or Brightness) Equalized')
+				self.is_first_equalization_hsv = False
+			self.hsv_equalized_image_widget.set_image(args[1])
+			self.hsv_equalized_image = args[0]
+			self.hsv_equalized_image_path = args[1]
 		else:
 			if self.is_first_equalization_rgb:
-				self.tabs.addTab(self.rgb_equalized_image_widget, 'RGB (Average) Equalized')
+				self.tabs.addTab(self.rgb_equalized_image_widget, 'RGB Equalized')
 				self.is_first_equalization_rgb = False
 			self.rgb_equalized_image_widget.set_image(args[1])
 			self.rgb_equalized_image = args[0]
@@ -281,9 +284,9 @@ class Window(QMainWindow):
 		self.action_equalize_rgb.setEnabled(False)
 		tools_menu.addAction(self.action_equalize_rgb)
 
-		self.action_equalize_hsi = self.create_action(self, '&Equalize HSI...', self.equalize_event(True), 'Ctrl+W')
-		self.action_equalize_hsi.setEnabled(False)
-		tools_menu.addAction(self.action_equalize_hsi)
+		self.action_equalize_hsv = self.create_action(self, '&Equalize HSV...', self.equalize_event(True), 'Ctrl+W')
+		self.action_equalize_hsv.setEnabled(False)
+		tools_menu.addAction(self.action_equalize_hsv)
 
 		tools_menu.addSeparator()
 

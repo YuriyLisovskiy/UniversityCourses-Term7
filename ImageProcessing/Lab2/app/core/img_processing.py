@@ -1,11 +1,11 @@
-import math
+import colorsys
 import numpy as np
 import matplotlib.image as mp_img
 
 from app.core import masks
 
 
-def calc_hist(img, opt):
+def calc_rgb_hist(img, opt):
 	channel = {
 		'r': img[:, :, 0],
 		'g': img[:, :, 1],
@@ -19,18 +19,14 @@ def calc_hist(img, opt):
 	return np.array(hist) / (m * n)
 
 
-def calc_hist_hsi(img, opt):
-	channel = {
-		'h': 0,
-		's': 1,
-		'i': 2,
-	}[opt]
-	m, n, _ = img.shape
-	hist = [0.0] * 256
-	for i in range(m):
-		for j in range(n):
-			hist[int(img[i, j, channel] * 255)] += 1
-	return hist
+def calc_hsv_hist(image, opt):
+	channel = {'h': 0, 's': 1, 'v': 2}[opt]
+	m, n, _ = image.shape
+	hs = [0.0] * 256
+	for k in range(m):
+		for l in range(n):
+			hs[int(image[k, l, channel])] += 1
+	return hs
 
 
 def calc_avg_hist(img):
@@ -46,6 +42,195 @@ def calc_avg_hist(img):
 			hist[b_chan[x, y]] += 1
 	for i in range(256):
 		hist[i] /= 3
+	return hist
+
+
+def rgb2gray(image):
+	return np.dot(image[..., :3], [0.2989, 0.5870, 0.1140])
+
+
+def equalize_gray_scale(img):
+	def get_hist(image):
+		m, n = image.shape
+		hs = [0.0] * 256
+		for k in range(m):
+			for l in range(n):
+				hs[int(img[k, l])] += 1
+		return np.array(hs)
+
+	hist = get_hist(img)
+	colors_n = len(hist)
+	h, w = img.shape
+	num_of_pxs = h * w
+	equalized = [0.0] * colors_n
+	count = 0
+	for i in range(colors_n):
+		count += hist[i]
+		mean = count / num_of_pxs
+		equalized[i] = round(mean * (colors_n - 1))
+	new_img = np.zeros_like(img)
+	for x in range(h):
+		for y in range(w):
+			new_img[x, y] = equalized[int(img[x, y])]
+	return new_img
+
+
+def rgb2hsv(img):
+	hsi_image = np.zeros_like(img).astype('float')
+	if len(img.shape) == 3:
+		height, width, _ = img.shape
+	else:
+		height, width = img.shape
+	for x in range(height):
+		for y in range(width):
+			hsi_image[x, y] = colorsys.rgb_to_hsv(*img[x, y])
+	return hsi_image
+
+
+def hsv2rgb(img):
+	rgb_image = np.zeros_like(img).astype(np.uint8)
+	if len(img.shape) == 3:
+		height, width, _ = img.shape
+	else:
+		height, width = img.shape
+	for x in range(height):
+		for y in range(width):
+			rgb_image[x, y] = colorsys.hsv_to_rgb(*img[x, y])
+	return rgb_image
+
+
+def equalize_hsv(img):
+	colors_n = 256
+	h, w, _ = img.shape
+	num_of_pxs = h * w
+	equalized = [0.0] * colors_n
+	hist = calc_hsv_hist(img, 'v')
+	count = 0
+	for i in range(len(hist)):
+		count += hist[i]
+		mean = count / num_of_pxs
+		equalized[i] = round(mean * (colors_n - 1))
+	new_img = np.zeros_like(img)
+	for x in range(h):
+		for y in range(w):
+			new_px = list(img[x, y])
+			new_px[2] = equalized[int(img[x, y, 2])]
+			new_img[x, y] = new_px
+	return new_img
+
+
+def equalize_rgb(img):
+	colors_n = 256
+	h, w, _ = img.shape
+	num_of_pxs = h * w
+	equalized = [0.0] * colors_n
+	hist = calc_avg_hist(img)
+	count = 0
+	for i in range(len(hist)):
+		count += hist[i]
+		mean = count / num_of_pxs
+		equalized[i] = round(mean * (colors_n - 1))
+	new_img = np.zeros_like(img)
+	for x in range(h):
+		for y in range(w):
+			new_img[x, y, 0] = equalized[img[x, y, 0]]
+			new_img[x, y, 1] = equalized[img[x, y, 1]]
+			new_img[x, y, 2] = equalized[img[x, y, 2]]
+	return new_img
+
+
+def equalize(img):
+	px = img[0, 0]
+	if px[0] == px[1] == px[2]:
+		return equalize_gray_scale(rgb2gray(img))
+	elif len(img.shape) == 3:
+		if any([isinstance(chan, float) for chan in list(px)]):
+			return equalize_hsv(img)
+		elif all([isinstance(chan, int) or isinstance(chan, np.uint8) for chan in list(px)]):
+			return equalize_rgb(img)
+	else:
+		raise AttributeError('images with shape "{}" are not supported'.format(len(img.shape)))
+
+
+def calc_grad_2x2(_filter, _img, i, j, chan):
+	return (_filter[0, 0] * _img[i, j, chan]) + \
+		(_filter[0, 1] * _img[i, j + 1, chan]) + \
+		(_filter[1, 0] * _img[i + 1, j, chan]) + \
+		(_filter[1, 1] * _img[i + 1, j + 1, chan])
+
+
+def calc_grad_3x3(_filter, _img, i, j, chan):
+	return (_filter[0, 0] * _img[i - 1, j - 1, chan]) + \
+		(_filter[0, 1] * _img[i - 1, j, chan]) + \
+		(_filter[0, 2] * _img[i - 1, j + 1, chan]) + \
+		(_filter[1, 0] * _img[i, j - 1, chan]) + \
+		(_filter[1, 1] * _img[i, j, chan]) + \
+		(_filter[1, 2] * _img[i, j + 1, chan]) + \
+		(_filter[2, 0] * _img[i + 1, j - 1, chan]) + \
+		(_filter[2, 1] * _img[i + 1, j, chan]) + \
+		(_filter[2, 2] * _img[i + 1, j + 1, chan])
+
+
+def process_op(img, x_filter, y_filter):
+	assert len(x_filter) == len(y_filter)
+	h, w, d = img.shape
+	gradient_image = np.zeros((h, w, d))
+	calc_grad, start = {
+		2: (calc_grad_2x2, 0),
+		3: (calc_grad_3x3, 1)
+	}[len(x_filter)]
+	for channel in range(d):
+		for i in range(start, h - 1):
+			for j in range(start, w - 1):
+				horizontal_grad = calc_grad(x_filter, img, i, j, channel)
+				vertical_grad = calc_grad(y_filter, img, i, j, channel)
+
+				magnitude = np.sqrt(pow(horizontal_grad, 2.0) + pow(vertical_grad, 2.0))
+				gradient_image[i - 1, j - 1, channel] = magnitude
+
+	return gradient_image[:, :, 0] + gradient_image[:, :, 1] + gradient_image[:, :, 2]
+
+
+def sobel(img):
+	return process_op(img, masks.sobel_horizontal, masks.sobel_vertical)
+
+
+def prewitt(img):
+	return process_op(img, masks.prewitt_horizontal, masks.prewitt_vertical)
+
+
+def robert(img):
+	return process_op(img, masks.robert_horizontal, masks.robert_vertical)
+
+
+def save_gray(_path, img):
+	mp_img.imsave(_path, img, cmap='gray')
+
+
+"""
+if __name__ == '__main__':
+
+	from app.settings import INPUT, OUTPUT
+
+	orig = mp_img.imread(INPUT + 'city.bmp')
+	hsv_img = rgb2hsv(orig)
+	equalized = equalize_hsv(hsv_img)
+	new_img = hsv2rgb(equalized)
+	mp_img.imsave(OUTPUT + 'city_hsv_equalized.bmp', new_img)
+"""
+
+"""
+def calc_hist_hsi(img, opt):
+	channel = {
+		'h': 0,
+		's': 1,
+		'i': 2,
+	}[opt]
+	m, n, _ = img.shape
+	hist = [0.0] * 256
+	for i in range(m):
+		for j in range(n):
+			hist[int(img[i, j, channel] * 255)] += 1
 	return hist
 
 
@@ -98,7 +283,10 @@ def hsi2rgb_px(px):
 
 def rgb2hsi(image):
 	hsi_image = np.zeros_like(image).astype('float')
-	height, width, _ = image.shape
+	if len(image.shape) == 3:
+		height, width, _ = image.shape
+	else:
+		height, width = image.shape
 	for x in range(height):
 		for y in range(width):
 			px = rgb2hsi_px(image[x, y])
@@ -108,7 +296,10 @@ def rgb2hsi(image):
 
 def hsi2rgb(image):
 	rgb_image = np.zeros_like(image).astype(np.uint8)
-	height, width, _ = image.shape
+	if len(image.shape) == 3:
+		height, width, _ = image.shape
+	else:
+		height, width = image.shape
 	for x in range(height):
 		for y in range(width):
 			px = hsi2rgb_px(image[x, y])
@@ -117,116 +308,59 @@ def hsi2rgb(image):
 
 
 def equalize_hsi(img):
-	hist = calc_hist_hsi(img, 'i')
-	colors_n = len(hist)
+	eps = 0.00000000001
+	h, w, _ = img.shape
+	num_of_pxs = h * w
+	mean = 0.0
+	new_img = np.array(img)
+	while not abs(mean - 0.5) < eps:
+		print(mean)
+		for i in range(h):
+			for j in range(w):
+				mean += new_img[i, j, 2]
+		mean /= num_of_pxs
+		if mean != 0.5:
+			theta = math.log(0.5, math.e) / math.log(mean, math.e)
+			for x in range(h):
+				for y in range(w):
+					px = list(new_img[x, y])
+					px[2] = (px[2] ** theta)
+					new_img[x, y] = px
+
+	# Checking hue and saturation
+	# for x in range(h):
+	# 	for y in range(w):
+	# 		assert img[x, y, 0] == new_img[x, y, 0]
+	# 		assert img[x, y, 1] == new_img[x, y, 1]
+
+	return new_img
+
+
+def equalize_hsi2(img):
+	def calc_hsi_hist(image, opt):
+		channel = {'h': 0, 's': 1, 'i': 2}[opt]
+		m, n, _ = image.shape
+		hs = [0.0] * 256
+		for k in range(m):
+			for l in range(n):
+				hs[int(image[k, l, channel] * 255)] += 1
+		return hs
+
+	colors_n = 256
 	h, w, _ = img.shape
 	num_of_pxs = h * w
 	equalized = [0.0] * colors_n
+	hist = calc_hsi_hist(img, 'i')
 	count = 0
-	for i in range(colors_n):
+	for i in range(len(hist)):
 		count += hist[i]
 		mean = count / num_of_pxs
 		equalized[i] = round(mean * (colors_n - 1))
 	new_img = np.zeros_like(img)
 	for x in range(h):
 		for y in range(w):
-			px = list(img[x, y])
-			px[2] = equalized[int(px[2] * (colors_n - 1))]
-			new_img[x, y] = px
+			new_px = list(img[x, y])
+			new_px[2] = equalized[int(img[x, y, 2] * 255)]
+			new_img[x, y] = new_px
 	return new_img
-
-
-def equalize_hsi2(img):
-	h, w, _ = img.shape
-	num_of_pxs = h * w
-	mean = 0.0
-	for i in range(h):
-		for j in range(w):
-			mean += img[i, j, 2]
-	mean /= num_of_pxs
-	if mean == 0.5:
-		new_img = img
-	else:
-		theta = math.log(0.5, math.e) / math.log(mean, math.e)
-		new_img = np.zeros_like(img)
-		for x in range(h):
-			for y in range(w):
-				px = list(img[x, y])
-				px[2] = (px[2] ** theta)
-				new_img[x, y] = px
-	return new_img
-
-
-def equalize_rgb(img):
-	_l = 256
-	h, w, _ = img.shape
-	num_of_pxs = h * w
-	equalized = [0.0] * 256
-	hist = calc_avg_hist(img)
-	count = 0
-	for i in range(len(hist)):
-		count += hist[i]
-		mean = count / num_of_pxs
-		equalized[i] = round(mean * (_l - 1))
-	new_img = np.zeros_like(img)
-	for x in range(h):
-		for y in range(w):
-			new_img[x, y, 0] = equalized[img[x, y, 0]]
-			new_img[x, y, 1] = equalized[img[x, y, 1]]
-			new_img[x, y, 2] = equalized[img[x, y, 2]]
-	return new_img
-
-
-def calc_grad_2x2(_filter, _img, i, j, chan):
-	return (_filter[0, 0] * _img[i, j, chan]) + \
-		(_filter[0, 1] * _img[i, j + 1, chan]) + \
-		(_filter[1, 0] * _img[i + 1, j, chan]) + \
-		(_filter[1, 1] * _img[i + 1, j + 1, chan])
-
-
-def calc_grad_3x3(_filter, _img, i, j, chan):
-	return (_filter[0, 0] * _img[i - 1, j - 1, chan]) + \
-		(_filter[0, 1] * _img[i - 1, j, chan]) + \
-		(_filter[0, 2] * _img[i - 1, j + 1, chan]) + \
-		(_filter[1, 0] * _img[i, j - 1, chan]) + \
-		(_filter[1, 1] * _img[i, j, chan]) + \
-		(_filter[1, 2] * _img[i, j + 1, chan]) + \
-		(_filter[2, 0] * _img[i + 1, j - 1, chan]) + \
-		(_filter[2, 1] * _img[i + 1, j, chan]) + \
-		(_filter[2, 2] * _img[i + 1, j + 1, chan])
-
-
-def process_op(img, x_filter, y_filter):
-	assert len(x_filter) == len(y_filter)
-	h, w, d = img.shape
-	gradient_image = np.zeros((h, w, d))
-	multiply, start = {
-		2: (calc_grad_2x2, 0),
-		3: (calc_grad_3x3, 1)
-	}[len(x_filter)]
-	for channel in range(d):
-		for i in range(start, h - 1):
-			for j in range(start, w - 1):
-				horizontal_grad = multiply(x_filter, img, i, j, channel)
-				vertical_grad = multiply(y_filter, img, i, j, channel)
-
-				magnitude = np.sqrt(pow(horizontal_grad, 2.0) + pow(vertical_grad, 2.0))
-				gradient_image[i - 1, j - 1, channel] = magnitude
-
-	return gradient_image[:, :, 0] + gradient_image[:, :, 1] + gradient_image[:, :, 2]
-
-
-def sobel(img):
-	return process_op(img, masks.sobel_horizontal, masks.sobel_vertical)
-
-
-def prewitt(img):
-	return process_op(img, masks.prewitt_horizontal, masks.prewitt_vertical)
-
-
-def robert(img):
-	return process_op(img, masks.robert_horizontal, masks.robert_vertical)
-
-
-def save_gray(_path, img):
-	mp_img.imsave(_path, img, cmap='gray')
+"""
