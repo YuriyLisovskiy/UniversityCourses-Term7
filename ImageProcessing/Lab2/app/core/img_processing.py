@@ -11,26 +11,26 @@ def calc_rgb_hist(img, opt):
 		'b': img[:, :, 2]
 	}[opt].astype('int')
 	m, n, _ = img.shape
-	hist = [0.0] * 256
+	hist = [0] * 256
 	for i in range(m):
 		for j in range(n):
 			hist[channel[i, j]] += 1
-	return np.array(hist) / (m * n)
+	return np.array(hist)# / (m * n)
 
 
 def calc_hsv_hist(image, opt):
 	channel = {'h': 0, 's': 1, 'v': 2}[opt]
 	m, n, _ = image.shape
-	hs = [0.0] * 256
+	hs = [0] * 256
 	for k in range(m):
 		for l in range(n):
 			hs[int(image[k, l, channel])] += 1
-	return hs
+	return np.array(hs)
 
 
 def calc_avg_hist(img):
 	m, n, _ = img.shape
-	hist = [0.0] * 256
+	hist = [0] * 256
 	r_chan = img[:, :, 0]
 	g_chan = img[:, :, 1]
 	b_chan = img[:, :, 2]
@@ -41,7 +41,7 @@ def calc_avg_hist(img):
 			hist[b_chan[x, y]] += 1
 	for i in range(256):
 		hist[i] /= 3
-	return hist
+	return np.array(hist)
 
 
 def rgb2gray(image):
@@ -160,10 +160,10 @@ def equalize_hsv(img):
 	num_of_pxs = h * w
 	equalized = [0.0] * colors_n
 	hist = calc_hsv_hist(img, 'v')
-	count = 0
+	cumulative_sum = 0
 	for i in range(len(hist)):
-		count += hist[i]
-		mean = count / num_of_pxs
+		cumulative_sum += hist[i]
+		mean = cumulative_sum / num_of_pxs
 		equalized[i] = round(mean * (colors_n - 1))
 	new_img = np.zeros_like(img)
 	for x in range(h):

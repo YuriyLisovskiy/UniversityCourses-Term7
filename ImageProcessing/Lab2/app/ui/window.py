@@ -131,7 +131,7 @@ class Window(QMainWindow):
 				(ipc.calc_rgb_hist(img, 'r'), 'r', 'Red'),
 				(ipc.calc_rgb_hist(img, 'g'), 'g', 'Green'),
 				(ipc.calc_rgb_hist(img, 'b'), 'b', 'Blue'),
-				(ipc.calc_hsv_hist(ipc.rgb2hsv(img), 'v'), 'gray', 'HSV (Value or Brightness)')
+				(ipc.calc_hsv_hist(ipc.rgb2hsv(img), 'v'), 'black', 'HSV (Brightness)')
 			))
 
 		worker = Worker(inner)
@@ -143,13 +143,13 @@ class Window(QMainWindow):
 		assert isinstance(args[1], tuple)
 		hist_tab_widget = QTabWidget(self)
 		hist_tab_widget.setWindowTitle('Histogram | {}'.format(args[0]))
-		# hist_widget.clear()
 		for hist in args[1]:
-			hist_widget = HistogramWidget()
+			hist_widget = HistogramWidget(args[0].split('/')[-1])
 			hist_widget.set_hist(hist)
 			hist_tab_widget.addTab(hist_widget, hist[2])
 
 		hist_tab_widget.setWindowFlags(hist_tab_widget.windowFlags() | Qt.Window)
+		hist_tab_widget.resize(1200, 800)
 		hist_tab_widget.show()
 
 	def equalize_event(self, hsv=False):
@@ -215,6 +215,7 @@ class Window(QMainWindow):
 			self.rgb_equalized_image_path = args[1]
 
 		if else_:
+			# noinspection PyUnboundLocalVariable
 			self.tabs.setTabEnabled(idx, True)
 			tab_text = self.tabs.tabText(idx).split()
 			self.tabs.setTabText(idx, ' '.join(tab_text[:len(tab_text) - 1]) + ' Equalized')
@@ -247,13 +248,15 @@ class Window(QMainWindow):
 		widget.show()
 
 	def clear_output_folder_event(self):
-		def inner(initial_folder):
+		def inner(initial_folder, root=True):
 			for file in os.listdir(initial_folder):
 				file_path = os.path.join(initial_folder, file)
 				if os.path.isfile(file_path):
 					os.unlink(file_path)
 				elif os.path.isdir(file_path):
-					inner(file_path)
+					inner(file_path, False)
+			if not root:
+				os.rmdir(initial_folder)
 			return initial_folder
 
 		worker = Worker(inner, OUTPUT)

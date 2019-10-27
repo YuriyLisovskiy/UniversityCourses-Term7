@@ -1,4 +1,6 @@
+import os
 from app.ui import util
+from app.settings import HIST_OUT
 
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import QThreadPool, Qt
@@ -22,14 +24,15 @@ class ImageLabel(QLabel):
 
 class HistogramWidget(QWidget):
 
-	def __init__(self, parent=None):
+	def __init__(self, file_name=None, parent=None):
 
 		# noinspection PyArgumentList
 		super(HistogramWidget, self).__init__(parent)
 
+		self.file_name = file_name
 		self.thread_pool = QThreadPool()
 
-		self.figure = Figure()
+		self.figure = Figure(figsize=(12, 8), dpi=100)
 		self.canvas = FigureCanvas(self.figure)
 		self.toolbar = NavigationToolbar(self.canvas, self)
 
@@ -53,10 +56,20 @@ class HistogramWidget(QWidget):
 
 	def set_hist(self, hist):
 		self.subplot.clear()
-		kwargs = dict(alpha=0.5, bins=200, density=True, stacked=True)
-		self.subplot.hist(hist[0], **kwargs, color=hist[1], label=hist[2])
+		kwargs = dict(alpha=0.5)# , bins=200, density=True, stacked=True)
+		self.subplot.bar([i for i in range(0, 256)], hist[0], **kwargs, color=hist[1], label=hist[2])
 		self.subplot.legend(loc='upper right')
+		if self.file_name is not None:
+			self.subplot.set_title('File: {}'.format(self.file_name))
+		self.subplot.set_xlabel('Pixel/Channel value')
+		self.subplot.set_ylabel('Frequency')
 		self.canvas.draw_idle()
+		dir_name = HIST_OUT + self.file_name.replace('.', '_', -1)
+		if not os.path.exists(dir_name):
+			os.makedirs(dir_name)
+		self.figure.savefig(
+			'{}/hist_{}.png'.format(dir_name, hist[2].lower().replace(' ', '_', -1))
+		)
 
 	def err_handler(self, msg):
 		util.popup_err(self, msg)
