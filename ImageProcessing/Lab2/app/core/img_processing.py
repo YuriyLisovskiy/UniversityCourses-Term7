@@ -207,6 +207,29 @@ def equalize(img):
 		raise AttributeError('images with shape "{}" are not supported'.format(len(img.shape)))
 
 
+def calc_grad(_filter, _img, i, j, chan):
+	if len(_filter) == 2:
+		_img_part = np.array([
+			[_img[i, j, chan], _img[i, j + 1, chan]],
+			[_img[i + 1, j, chan], _img[i + 1, j + 1, chan]],
+		])
+	elif len(_filter) == 3:
+		_img_part = np.array([
+			[_img[i - 1, j - 1, chan], _img[i - 1, j, chan], _img[i - 1, j + 1, chan]],
+			[_img[i, j - 1, chan], _img[i, j, chan], _img[i, j + 1, chan]],
+			[_img[i + 1, j - 1, chan], _img[i + 1, j, chan], _img[i + 1, j + 1, chan]],
+		])
+	else:
+		raise ValueError('filter is not supported')
+	res = 0
+	n = len(_filter)
+	for i in range(n):
+		for j in range(n):
+			res += _filter[i, j] * _img_part[i, j]
+
+	return res
+
+
 def calc_grad_2x2(_filter, _img, i, j, chan):
 	return (_filter[0, 0] * _img[i, j, chan]) + \
 		(_filter[0, 1] * _img[i, j + 1, chan]) + \
@@ -230,10 +253,7 @@ def process_op(img, x_filter, y_filter):
 	assert len(x_filter) == len(y_filter)
 	h, w, d = img.shape
 	gradient_image = np.zeros((h, w, d))
-	calc_grad, start = {
-		2: (calc_grad_2x2, 0),
-		3: (calc_grad_3x3, 1)
-	}[len(x_filter)]
+	start = len(x_filter) - 2
 	for channel in range(d):
 		for i in range(start, h - 1):
 			for j in range(start, w - 1):
