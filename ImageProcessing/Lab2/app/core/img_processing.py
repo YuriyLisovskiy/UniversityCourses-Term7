@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.image as mp_img
 
+from datetime import datetime
+
 from app.core import masks
 
 
@@ -155,6 +157,8 @@ def hsv2rgb(img):
 
 
 def equalize_hsv(img):
+	now = datetime.now()
+
 	colors_n = 256
 	h, w, _ = img.shape
 	num_of_pxs = h * w
@@ -171,10 +175,15 @@ def equalize_hsv(img):
 			new_px = list(img[x, y])
 			new_px[2] = equalized[int(img[x, y, 2])]
 			new_img[x, y] = new_px
+
+	print('HSV: {}'.format((datetime.now() - now).total_seconds()))
+
 	return new_img
 
 
 def equalize_rgb(img):
+	now = datetime.now()
+
 	colors_n = 256
 	h, w, _ = img.shape
 	num_of_pxs = h * w
@@ -191,6 +200,9 @@ def equalize_rgb(img):
 			new_img[x, y, 0] = equalized[img[x, y, 0]]
 			new_img[x, y, 1] = equalized[img[x, y, 1]]
 			new_img[x, y, 2] = equalized[img[x, y, 2]]
+
+	print('RGB: {}'.format((datetime.now() - now).total_seconds()))
+
 	return new_img
 
 
