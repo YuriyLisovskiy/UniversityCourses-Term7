@@ -100,15 +100,6 @@ class Maybe:
 	def __init__(self, value):
 		self._value = value
 
-	def __eq__(self, other):
-		return self._value == other._value
-
-	def __gt__(self, other):
-		return self._value > other._value
-
-	def __lt__(self, other):
-		return self._value < other._value
-
 	@staticmethod
 	def some(value):
 		if value is None:
@@ -182,7 +173,7 @@ def bin_search(arr, x):
 
 
 def main():
-	ls = (2, 5, 7, 9, 11, 17, 222)
+	ls = [2, 5, 7, 9, 11, 17, 222]
 	print(bin_search(ls, 11))
 	print(bin_search(ls, 12))
 
