@@ -21,7 +21,7 @@ train(
     ],
     [
     	% cab(Number, Type, PricePerSeat, [SeatNumbers]).
-        cab(3, couchette, 55, [3,4,5]),
+        cab(3, coupe, 55, [3,4,5]),
         cab(4, open, 25, [5,6,7])
     ]
 ).
@@ -35,8 +35,8 @@ train(
     ],
     [
     	% cab(Number, Type, PricePerSeat, [SeatNumbers]).
-        cab(2, couchette, 55, [1,2]),
-        cab(1, couchette, 55, [3,5])
+        cab(2, coupe, 55, [1,2]),
+        cab(1, coupe, 55, [3,5])
     ]
 ).
 train(
@@ -46,13 +46,13 @@ train(
     	% station(Name, ArrivalTime, DepartureTime).
         station(lviv, "2019-03-04T13:00Z", "2019-03-04T13:00Z"),
         station(st2, "2019-03-04T14:30Z", "2019-03-04T14:40Z"),
-        station(st3, "2019-03-04T15:30Z", "2019-03-04T15:40Z"),
-        station(rivne, "2019-03-04T16:50Z", "2019-03-04T17:00Z"),
+        station(st5, "2019-03-04T15:30Z", "2019-03-04T15:40Z"),
+        station(ternopil, "2019-03-04T16:50Z", "2019-03-04T17:00Z"),
         station(kyiv, "2019-03-04T18:40Z", "2019-03-04T18:40Z")
     ],
     [
     	% cab(Number, Type, PricePerSeat, [SeatNumbers]).
-        cab(1, couchette, 55, [3,4,5]),
+        cab(1, coupe, 55, [3,4,5]),
         cab(3, open, 25, [5,6,7])
     ]
 ).
@@ -61,14 +61,14 @@ train(
     "Lviv-Rivne",
     [
     	% station(Name, ArrivalTime, DepartureTime).
-    	station(lviv, "2019-03-04T12:30Z", "2019-03-04T12:30Z"),
-        station(st2, "2019-03-04T13:40Z", "2019-03-04T13:50Z"),
+    	station(kyiv, "2019-03-04T12:30Z", "2019-03-04T12:30Z"),
+        station(st2, "2019-03-04T14:30Z", "2019-03-04T14:40Z"),
         station(st3, "2019-03-04T14:30Z", "2019-03-04T14:40Z"),
         station(rivne, "2019-03-04T16:40Z", "2019-03-04T16:40Z")
     ],
     [
     	% cab(Number, Type, PricePerSeat, [SeatNumbers]).
-        cab(1, couchette, 50, [1,2,3,4]),
+        cab(1, coupe, 50, [1,2,3,4]),
         cab(2, open, 20, [5,6,7])
     ]
 ).
@@ -84,9 +84,9 @@ train(
     ],
     [
         % cab(Number, Type, PricePerSeat, [SeatNumbers]). 	
-        cab(1, couchette, 55, [1,2,3]),
+        cab(1, coupe, 55, [1,2,3]),
         cab(2, open, 25, [4,10]),
-        cab(3, couchette, 55, [3,4,5]),
+        cab(3, coupe, 55, [3,4,5]),
         cab(4, open, 25, [5,6,7])
     ]
 ).
@@ -102,8 +102,8 @@ train(
     ],
     [
     	% cab(Number, Type, PricePerSeat, [SeatNumbers]).
-        cab(2, couchette, 55, [1,2]),
-        cab(1, couchette, 55, [3,5])
+        cab(2, coupe, 55, [1,2]),
+        cab(1, coupe, 55, [3,5])
     ]
 ).
 train(
@@ -118,7 +118,7 @@ train(
     ],
     [
     	% cab(Number, Type, PricePerSeat, [SeatNumbers]).
-        cab(2, couchette, 55, [3,4,5]),
+        cab(2, coupe, 55, [3,4,5]),
         cab(3, open, 25, [5,6,7])
     ]
 ).
@@ -135,9 +135,9 @@ train(
     ],
     [
     	% cab(Number, Type, PricePerSeat, [SeatNumbers]).
-        cab(3, couchette, 55, [3,4,5]),
+        cab(3, coupe, 55, [3,4,5]),
         cab(4, open, 25, [5,6,7]),
-        cab(2, couchette, 55, [1,2])
+        cab(2, coupe, 55, [1,2])
     ]
 ).
 train(
@@ -152,7 +152,7 @@ train(
     [
     	% cab(Number, Type, PricePerSeat, [SeatNumbers]).
         cab(4, open, 25, [5,6,7]),
-	    cab(2, couchette, 55, [1,2])
+	    cab(2, coupe, 55, [1,2])
     ]
 ).
 train(
@@ -167,7 +167,7 @@ train(
     ],
     [
     	% cab(Number, Type, PricePerSeat, [SeatNumbers]).
-        cab(3, couchette, 55, [3,4,5]),
+        cab(3, coupe, 55, [3,4,5]),
         cab(4, open, 25, [5,6,7])
     ]
 ).
@@ -184,7 +184,7 @@ train(
     ],
     [
     	% cab(Number, Type, PricePerSeat, [SeatNumbers]).
-        cab(1, couchette, 55, [3,4,5]),
+        cab(1, coupe, 55, [3,4,5]),
         cab(5, open, 25, [5,6,7])
     ]
 ).
@@ -380,7 +380,7 @@ get_available_places(
     !.
 
 % Example:
-% get_transit_and_available_places(lviv, rivne, 1, "2019-03-04T11:30Z", X).
+% transit_and_available_places(lviv, rivne, 1, "2019-03-04T11:30Z", X).
 transit_and_available_places(From, To, NumTransfers, MinTime, Result) :-
     get_transit(From, To, NumTransfers, MinTime, Transit),
     Transit = transit(_, Path, _),
@@ -390,7 +390,7 @@ transit_and_available_places(From, To, NumTransfers, MinTime, Result) :-
     Result = [Transit | [AvailablePlaces]].
 
 % Example:
-% tickets_from_to_by_type(lviv, rivne, 1, "2019-03-04T11:30Z", open, X).
+% tickets_from_to_by_type(lviv, rivne, 1, "2019-03-04T11:30Z", coupe, X).
 tickets_from_to_by_type(From, To, NumTransfers, MinTime, CabType, Result) :-
     transit_and_available_places(From, To, NumTransfers, MinTime, [Transit | [AvailablePlaces]]),
     Transit = transit(Trains, Path, Transfers),
