@@ -12,39 +12,42 @@ func ifElse(cond func() bool, success func() interface{}, fail func() interface{
 
 // Higher-order functions: passing anonymous functions
 // 	and 'ifElse' as parameters of 'ifElse'.
-func binSearchInner(arr []int, x int, bottom int, top int) int {
-	mid := (top + bottom) / 2
-	return ifElse(
-		func() bool {
-			return top < bottom
-		},
-		func() interface{} {
-			return -1
-		},
-		ifElse(
+func binSearch(arr []int, x int) int {
+	// Encapsulation: hide 'inner' helper function
+	//   in 'binSearch' function
+	var inner func(arr_ []int, x_ int, bottom int, top int) int
+	inner = func (arr_ []int, x_ int, bottom int, top int) int {
+		mid := (top + bottom) / 2
+		return ifElse(
 			func() bool {
-				return arr[mid] == x
+				return top < bottom
 			},
 			func() interface{} {
-				return mid
+				return -1
 			},
 			ifElse(
 				func() bool {
-					return arr[mid] > x
+					return arr_[mid] == x_
 				},
 				func() interface{} {
-					return binSearchInner(arr, x, bottom, mid - 1)	// Recursion
+					return mid
 				},
-				func() interface{} {
-					return binSearchInner(arr, x, mid + 1, top)		// Recursion
-				},
+				ifElse(
+					func() bool {
+						return arr_[mid] > x_
+					},
+					func() interface{} {
+						return inner(arr_, x_, bottom, mid - 1)	// Recursion
+					},
+					func() interface{} {
+						return inner(arr_, x_, mid+1, top)		// Recursion
+					},
+				),
 			),
-		),
-	)().(int)
-}
+		)().(int)
+	}
 
-func binSearch(arr []int, x int) int {
-	return binSearchInner(arr, x, 0, len(arr) - 1)
+	return inner(arr, x, 0, len(arr) - 1)
 }
 
 func main() {

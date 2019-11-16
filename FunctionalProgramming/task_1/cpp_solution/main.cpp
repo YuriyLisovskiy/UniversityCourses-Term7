@@ -12,27 +12,28 @@ Func if_else(const std::function<bool()>& cond, Func success, Func fail)
 
 // Higher-order functions: passing lambdas
 //  and if_else function as parameter of if_else.
-int bin_search_inner(int arr[], int x, int bottom, int top)
-{
-	int mid = (top + bottom) / 2;
-	return if_else<int, std::function<int()>>(
-		[top, bottom]() -> bool { return top < bottom; },
-		[]() -> int { return -1; },
-		if_else<int, std::function<int()>>(
-			[arr, mid, x]() -> bool { return arr[mid] == x; },
-			[mid]() -> int { return mid; },
-			if_else<int, std::function<int()>>(
-				[arr, mid, x]() -> bool { return arr[mid] > x; },
-				[arr, x, bottom, mid]() -> int { return bin_search_inner(arr, x, bottom, mid - 1); }, // Recursion
-				[arr, x, top, mid]() -> int { return bin_search_inner(arr, x, mid + 1, top); }     // Recursion
-			)
-		)
-	)();
-}
-
 int bin_search(int arr[], int n, int x)
 {
-	return bin_search_inner(arr, x, 0, n - 1);
+	// Encapsulation: hide 'inner' variable
+	//  (lambda function) in bin_search function
+	std::function<int(int*, int, int, int)> inner = [&](int arr[], int x, int bottom, int top)
+	{
+		int mid = (top + bottom) / 2;
+		return if_else<int, std::function<int()>>(
+			[top, bottom]() -> bool { return top < bottom; },
+			[]() -> int { return -1; },
+			if_else<int, std::function<int()>>(
+				[arr, mid, x]() -> bool { return arr[mid] == x; },
+				[mid]() -> int { return mid; },
+				if_else<int, std::function<int()>>(
+					[arr, mid, x]() -> bool { return arr[mid] > x; },
+					[inner, arr, x, bottom, mid]() -> int { return inner(arr, x, bottom, mid - 1); },	// Recursion
+					[inner, arr, x, top, mid]() -> int { return inner(arr, x, mid + 1, top); }			// Recursion
+				)
+			)
+		)();
+	};
+	return inner(arr, x, 0, n - 1);
 }
 
 
