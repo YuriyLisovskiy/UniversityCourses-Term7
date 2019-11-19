@@ -6,7 +6,7 @@ import subprocess
 if __name__ == '__main__':
 	print('main process started')
 
-	filename = os.path.join(os.path.abspath('.'), 'async_task.py')
+	filename = os.path.join(os.path.abspath('.'), '../lesson_10/main.py')
 	async_task = subprocess.Popen(['python', filename])
 
 	time.sleep(2)
