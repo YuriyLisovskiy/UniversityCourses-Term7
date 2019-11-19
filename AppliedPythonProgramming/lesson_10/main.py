@@ -120,6 +120,10 @@ def html_task():
 
 
 if __name__ == '__main__':
+	# url_parse_task()
+	# http_connection_task()
+	# http_request_task()
+	# xml_task()
 	html_task()
 
 
