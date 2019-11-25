@@ -1,4 +1,4 @@
-##IO monad task:
+## IO monad task:
  * [IO monad implementation](monad/io.py)
  * [solved task](io_task.py)
  
@@ -31,7 +31,7 @@ x = int(input())
 print(fact(x))
 ```
 
-##Maybe monad task:
+## Maybe monad task:
  * [Maybe monad implementation](monad/maybe.py)
  * [solved task](maybe_task.py)
 
