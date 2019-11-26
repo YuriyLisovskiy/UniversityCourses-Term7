@@ -3,13 +3,23 @@ import math
 from monad import Try
 
 
+# Gets number from console as float.
 def input_number(number_name):
+
+	# recover will be called in case of input_number failure,
+	#   i.e. when user types non-numeric string.
 	def recover(exc):
 		print(exc)
 		return input_number(number_name)
 
 	print('Input {}: '.format(number_name), end='')
-	return Try.of_failable(input).map(lambda val: int(val)).recover(lambda exc: recover(exc))
+
+	# user input
+	return Try.of_failable(input).map(
+		lambda val: float(val)    # cast string to float
+	).recover(
+		lambda exc: recover(exc)  # print exception if input string is not numeric
+	)
 
 
 if __name__ == '__main__':

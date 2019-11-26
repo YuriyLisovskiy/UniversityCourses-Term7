@@ -42,10 +42,12 @@ class Try(ABC):
 	def get(self):
 		pass
 
+	# Initializes Successful with given value.
 	@staticmethod
 	def successful(value):
 		return Successful(value)
 
+	# Initializes Successful with given exception object.
 	@staticmethod
 	def failure(exc):
 		return Failure(exc)
