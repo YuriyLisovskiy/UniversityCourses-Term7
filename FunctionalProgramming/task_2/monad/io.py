@@ -1,5 +1,6 @@
-# IO monad allows us to write a sequence of side-effecting instructions
-# (including I/O), even though we are working with pure values only.
+# IO monad allows us to write a sequence of side-effecting
+# instructions in functional style (including I/O),
+# even though we are working with pure values only.
 
 
 # Base IO monad class.
