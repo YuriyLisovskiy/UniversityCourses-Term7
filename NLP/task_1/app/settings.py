@@ -15,11 +15,14 @@ DIALOGFLOW_LANGUAGE_CODE = 'en-US'
 
 
 try:
-	from task_1.local_settings import *
+	from app.local_settings import *
 except ImportError:
 	pass
 
 
 # Setup.
+
+print(PRIVATE_KEY_PATH)
+
 assert os.path.exists(PRIVATE_KEY_PATH)
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = PRIVATE_KEY_PATH

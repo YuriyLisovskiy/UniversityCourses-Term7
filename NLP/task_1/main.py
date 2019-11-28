@@ -2,11 +2,11 @@ import json
 from google.api_core.exceptions import InvalidArgument
 
 from monad.io import IO
-from task_1.settings import (
+from app.settings import (
 	DIALOGFLOW_PROJECT_ID,
 	DIALOGFLOW_LANGUAGE_CODE
 )
-from task_1.df_api.agent import Agent, get_sessions_client
+from df_agent.agent import Agent, get_sessions_client
 
 config = {
 	'project_id': DIALOGFLOW_PROJECT_ID,
@@ -37,4 +37,9 @@ def step(agent):
 
 
 if __name__ == '__main__':
-	step(Agent(**config)).run()
+	a = Agent(**config)
+	
+	print(str(a))
+	print(repr(a))
+	
+	step(a).run()

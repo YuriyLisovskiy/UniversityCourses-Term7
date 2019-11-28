@@ -2,6 +2,8 @@ import uuid
 
 import dialogflow
 
+from df_agent import util
+
 
 class Agent:
 
@@ -18,21 +20,23 @@ class Agent:
 		self.client = client
 		
 		self.session = self.client.session_path(self.project_id, self.session_id)
-	
-	def _make_text_input(self, text):
-		return dialogflow.types.TextInput(text=text, language_code=self.lang_code)
-	
-	def _make_query_input(self, text_input):
-		assert isinstance(text_input, dialogflow.types.TextInput)
-		return dialogflow.types.QueryInput(text=text_input)
+		
+	def __str__(self):
+		return '<Agent: id={}>'.format(self.session_id)
 
-	def ask(self, question):
-		response = self.client.detect_intent(
+	def __repr__(self):
+		return str(self)
+
+	def detect_intent(self, text_to_analyze):
+		return self.client.detect_intent(
 			session=self.session,
-			query_input=self._make_query_input(
-				text_input=self._make_text_input(question)
+			query_input=util.make_query_input(
+				text_input=util.make_text_input(text_to_analyze, self.lang_code)
 			)
 		)
+
+	def ask(self, question):
+		response = self.detect_intent(question)
 		return {
 			'query_text': response.query_result.query_text,
 			'detected_intent': response.query_result.intent.display_name,
