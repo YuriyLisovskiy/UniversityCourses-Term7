@@ -28,15 +28,12 @@ class Agent:
 		return str(self)
 
 	def detect_intent(self, text_to_analyze):
-		return self.client.detect_intent(
+		response = self.client.detect_intent(
 			session=self.session,
 			query_input=util.make_query_input(
 				text_input=util.make_text_input(text_to_analyze, self.lang_code)
 			)
 		)
-
-	def ask(self, question):
-		response = self.detect_intent(question)
 		return {
 			'query_text': response.query_result.query_text,
 			'detected_intent': response.query_result.intent.display_name,

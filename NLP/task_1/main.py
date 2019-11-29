@@ -4,9 +4,12 @@ from google.api_core.exceptions import InvalidArgument
 from monad.io import IO
 from app.settings import (
 	DIALOGFLOW_PROJECT_ID,
-	DIALOGFLOW_LANGUAGE_CODE
+	DIALOGFLOW_LANGUAGE_CODE,
+	TELEGRAM_BOT_TOKEN
 )
 from df_agent.agent import Agent, get_sessions_client
+
+from t_bot.bot import UniversityAssistanceBot
 
 config = {
 	'project_id': DIALOGFLOW_PROJECT_ID,
@@ -21,13 +24,15 @@ def print_dict(d):
 
 def interact(question, agent):
 	try:
-		print_dict(agent.ask(question))
+		# print_dict(agent.detect_intent(question))
+		resp = agent.detect_intent(question)
+		print('Bot[{}]:'.format(resp['detected_intent']), resp['fulfillment_text'])
 	except InvalidArgument:
 		raise
 
 
 def step(agent):
-	return IO.print('Your question? ', end='').bind(
+	return IO.print('You: ', end='').bind(
 		lambda _: IO.read().bind(
 			lambda q: IO.ret(interact(q, agent)).bind(
 				lambda _: step(agent)
@@ -37,9 +42,7 @@ def step(agent):
 
 
 if __name__ == '__main__':
-	a = Agent(**config)
-	
-	print(str(a))
-	print(repr(a))
-	
-	step(a).run()
+	# a = Agent(**config)
+	# step(a).run()
+	bot = UniversityAssistanceBot(TELEGRAM_BOT_TOKEN, df_config=config)
+	bot.start()
