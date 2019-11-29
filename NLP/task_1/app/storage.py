@@ -1,6 +1,7 @@
 import json
 
 
+# Dict-based in-memory storage.
 class Storage:
 
 	def __init__(self):
