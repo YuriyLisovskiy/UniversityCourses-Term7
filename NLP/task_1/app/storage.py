@@ -23,15 +23,15 @@ class Storage:
 			'exams': [],
 			'credits': []
 		}
+		
+	def has_user(self, user_id):
+		return user_id in self.storage
 	
 	def has_exam(self, user_id, exam_info):
 		return self._find('exams', user_id, exam_info[0].strip().lower()) is not None
 	
 	def has_credit(self, user_id, credit_info):
 		return self._find('credits', user_id, credit_info[0].strip().lower()) is not None
-	
-	def contains_user(self, user_id):
-		return user_id in self.storage
 	
 	def add_credit(self, user_id, new_credit):
 		self.storage[user_id]['credits'].append({
@@ -66,6 +66,16 @@ class Storage:
 			credit['date'],
 			credit['time']
 		)
+	
+	def get_exams(self, user_id):
+		return '\n'.join(['{}) {}'.format(idx + 1, x['name']) for idx, x in enumerate(
+			self.storage[user_id]['exams']
+		)])
+	
+	def get_courses(self, user_id):
+		exams = self.storage[user_id]['exams']
+		credits_ = self.storage[user_id]['credits']
+		return '\n'.join(['{}) {}'.format(idx + 1, x['name']) for idx, x in enumerate(credits_ + exams)])
 	
 	def print(self):
 		print(json.dumps(self.storage, sort_keys=True, indent=4))

@@ -29,10 +29,10 @@ class UniversityAssistanceBot:
 			CommandHandler('help', self._text_message),
 			
 			# Create new exam.
-			CommandHandler('newexam', self._newexam_command),
+			CommandHandler('newexam', self._make_new_course_command(8, 'exam')),
 			
 			# Create new credit.
-			CommandHandler('newcredit', self._newcredit_command),
+			CommandHandler('newcourse', self._make_new_course_command(10, 'credit')),
 			
 			# Handlers on text message.
 			MessageHandler(Filters.text, self._text_message),
@@ -55,7 +55,6 @@ class UniversityAssistanceBot:
 		# log all errors.
 		dp.add_error_handler(self._log_error)
 		
-		# TODO: temporary!
 		# Simple data storage.
 		self.storage = Storage()
 		
@@ -80,45 +79,35 @@ class UniversityAssistanceBot:
 			return update.message.reply_text(message)
 		return inner
 	
-	# Handles new exam from user.
-	def _newexam_command(self, update, context):
-		len_of_command = 8
-		chat_id = update.message['chat']['id']
-		if not self.storage.contains_user(chat_id):
-			self.storage.add_user(chat_id)
-		
-		new_exam = update.message.text[len_of_command:].split(',')
-		if len(new_exam) != 3:
-			response_message = '''Incorrect exam information.
-Format: <Full name>, <Date(dd/mm/yyyy)>, <Time>
-Please, try again.'''
-		else:
-			if self.storage.has_exam(chat_id, new_exam):
-				response_message = '{} exam already exists.'.format(new_exam[0].strip())
-			else:
-				self.storage.add_exam(chat_id, new_exam)
-				response_message = 'Successfully added!'
-		update.message.reply_text(response_message)
+	# Makes new course handler.
+	def _make_new_course_command(self, cmd_len, typ_):
+		def inner(update, context):
+			len_of_command = cmd_len
+			chat_id = update.message['chat']['id']
+			if not self.storage.has_user(chat_id):
+				self.storage.add_user(chat_id)
+			
+			new_course = update.message.text[len_of_command:].split(',')
+			if len(new_course) != 3:
+				response_message = '''Incorrect format.
 
-	# Handles new credit from user.
-	def _newcredit_command(self, update, context):
-		len_of_command = 10
-		chat_id = update.message['chat']['id']
-		if not self.storage.contains_user(chat_id):
-			self.storage.add_user(chat_id)
-
-		new_credit = update.message.text[len_of_command:].split(',')
-		if len(new_credit) != 3:
-			response_message = '''Incorrect credit information.
 Format: <Full name>, <Date(dd/mm/yyyy)>, <Time>
-Please, try again.'''
-		else:
-			if self.storage.has_credit(chat_id, new_credit):
-				response_message = '{} credit already exists.'.format(new_credit[0].strip())
+
+Please, try again.'''.format(typ_)
 			else:
-				self.storage.add_credit(chat_id, new_credit)
-				response_message = 'Successfully added!'
-		update.message.reply_text(response_message)
+				if typ_ == 'exam':
+					fn_has = self.storage.has_exam
+					fn_add = self.storage.add_exam
+				else:
+					fn_has = self.storage.has_credit
+					fn_add = self.storage.add_credit
+				if fn_has(chat_id, new_course):
+					response_message = '{} course already exists.'.format(new_course[0].strip())
+				else:
+					fn_add(chat_id, new_course)
+					response_message = 'A new course is added successfully!'
+			update.message.reply_text(response_message)
+		return inner
 
 	# Handles the text message.
 	def _text_message(self, update, context):
@@ -136,7 +125,8 @@ Please, try again.'''
 	# Process user question using DialogFlow agent.
 	def _process_question(self, chat_id, text):
 		response = self.agents[chat_id].detect_intent(text)
-		if 'course intent' in response['detected_intent'].lower():
+		detected_intent = response['detected_intent'].lower()
+		if 'course intent' in detected_intent:
 			exam = self.storage.get_exam_info(chat_id, text)
 			if exam:
 				return exam
@@ -144,5 +134,13 @@ Please, try again.'''
 			if credit:
 				return credit
 			return 'Information not found, please, try again.'
+		elif 'exams intent' in detected_intent:
+			if self.storage.has_user(chat_id):
+				return 'Your exams for current term:\n{}'.format(self.storage.get_exams(chat_id))
+			return 'You have not added any exams yet.'
+		elif 'university courses intent' in detected_intent:
+			if self.storage.has_user(chat_id):
+				return 'Your courses for current term:\n{}'.format(self.storage.get_courses(chat_id))
+			return 'You have not added any courses yet.'
 		else:
 			return response['fulfillment_text']
