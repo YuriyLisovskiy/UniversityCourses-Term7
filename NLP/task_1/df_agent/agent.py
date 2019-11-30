@@ -5,6 +5,7 @@ import dialogflow
 from df_agent import util
 
 
+# Agent is a wrapper for DialogFlow API.
 class Agent:
 
 	def __init__(self, project_id, lang_code, client):
@@ -37,7 +38,6 @@ class Agent:
 		return {
 			'query_text': response.query_result.query_text,
 			'detected_intent': response.query_result.intent.display_name,
-			'detected_intent_confidence': response.query_result.intent_detection_confidence,
 			'fulfillment_text': response.query_result.fulfillment_text
 		}
 

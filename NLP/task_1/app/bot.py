@@ -8,37 +8,40 @@ from telegram.ext.filters import Filters
 from telegram.ext import Updater, MessageHandler, CommandHandler
 
 
+# Bot wrapper for telegram bot API.
 class UniversityAssistanceBot:
 
 	def __init__(self, token, df_config, logger=None):
+		
 		# If passed logger is None, setup default logger.
 		if not logger:
 			logger = default_logger
 		self._logger = logger
 		
+		# Configuration for DialogFlow agent.
 		assert df_config is not None
 		self.df_config = df_config
 
 		# Available bot handlers, order is required.
 		handlers = [
-			# Handlers on different commands
+			
+			# Handlers on standard bot's commands.
+			# Bot will answer using a default DialogFlow responses.
 			CommandHandler('start', self._text_message),
 			CommandHandler('stop', self._text_message),
-			
-			# Send a message when the command /help is issued.
 			CommandHandler('help', self._text_message),
 			
-			# Create new exam.
+			# Create new exam command.
 			CommandHandler('newexam', self._make_new_course_command(8, 'exam')),
 			
-			# Create new credit.
+			# Create new course which is not an exam.
 			CommandHandler('newcourse', self._make_new_course_command(10, 'credit')),
 			
 			# Handlers on text message.
 			MessageHandler(Filters.text, self._text_message),
 
-			# Handle all other message types.
-			MessageHandler(Filters.all, self._reply('Invalid: please, send me only text messages!'))
+			# Handle all other message types, i.e. stickers, emoji, gifs, etc.
+			MessageHandler(Filters.all, self._reply('Invalid: please, send me only text messages and valid commands!'))
 		]
 
 		# Create the Updater and pass it bot's token.
@@ -126,6 +129,8 @@ Please, try again.'''.format(typ_)
 	def _process_question(self, chat_id, text):
 		response = self.agents[chat_id].detect_intent(text)
 		detected_intent = response['detected_intent'].lower()
+		
+		# Check if Course Intent is triggered.
 		if 'course intent' in detected_intent:
 			exam = self.storage.get_exam_info(chat_id, text)
 			if exam:
@@ -134,13 +139,23 @@ Please, try again.'''.format(typ_)
 			if credit:
 				return credit
 			return 'Information not found, please, try again.'
+		
+		# Check if Exams Intent is triggered.
 		elif 'exams intent' in detected_intent:
 			if self.storage.has_user(chat_id):
-				return 'Your exams for current term:\n{}'.format(self.storage.get_exams(chat_id))
+				exams = self.storage.get_exams(chat_id)
+				if exams != '':
+					return 'Your exams for current term:\n{}'.format(exams)
 			return 'You have not added any exams yet.'
+		
+		# Check if University Courses Intent is triggered.
 		elif 'university courses intent' in detected_intent:
 			if self.storage.has_user(chat_id):
-				return 'Your courses for current term:\n{}'.format(self.storage.get_courses(chat_id))
+				courses = self.storage.get_courses(chat_id)
+				if courses != '':
+					return 'Your courses for current term:\n{}'.format(courses)
 			return 'You have not added any courses yet.'
+		
+		# Response the default text from DialogFlow agent.
 		else:
 			return response['fulfillment_text']
