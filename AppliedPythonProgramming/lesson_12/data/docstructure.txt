@@ -1,0 +1,32 @@
+файл bank-exc-25-11.json
+Тип цілого документа:  list
+Документ має елементів:  61
+Тип кожного елемента як цілого:
+ dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict
+Вигляд одного окремого елемента:
+ {'r030': 36, 'txt': 'Австралійський долар', 'rate': 16.406239, 'cc': 'AUD', 'exchangedate': '25.11.2019'}
+Ключі окремих частин елемента (словника):
+ r030 txt rate cc exchangedate
+Типи ключів і значень частин елемента:
+('str', ' : ', 'int')
+('str', ' : ', 'str')
+('str', ' : ', 'float')
+('str', ' : ', 'str')
+('str', ' : ', 'str')
+----------------------------------------
+файл bank-exc-2-12.json
+Тип цілого документа:  list
+Документ має елементів:  61
+Тип кожного елемента як цілого:
+ dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict dict
+Вигляд одного окремого елемента:
+ {'r030': 36, 'txt': 'Австралійський долар', 'rate': 16.222796, 'cc': 'AUD', 'exchangedate': '02.12.2019'}
+Ключі окремих частин елемента (словника):
+ r030 txt rate cc exchangedate
+Типи ключів і значень частин елемента:
+('str', ' : ', 'int')
+('str', ' : ', 'str')
+('str', ' : ', 'float')
+('str', ' : ', 'str')
+('str', ' : ', 'str')
+----------------------------------------
