@@ -123,7 +123,6 @@ Please, try again.'''.format(typ_)
 	def _process_question(self, chat_id, text):
 		response = self.agent.analyze(text)
 		detected_intent = response['intent'].lower()
-		
 		log.info(detected_intent)
 
 		# Return when University Courses intent is triggered.
@@ -137,10 +136,11 @@ Please, try again.'''.format(typ_)
 		# TODO: retrieve exam name from response!
 		# Return when Course intent is triggered.
 		def course():
-			exam = self.storage.get_exam_info(chat_id, text)
+			course_name = response['entities'][0]['name'].lower()
+			exam = self.storage.get_exam_info(chat_id, course_name)
 			if exam:
 				return exam
-			credit = self.storage.get_credit_info(chat_id, text)
+			credit = self.storage.get_credit_info(chat_id, course_name)
 			if credit:
 				return credit
 			return 'Information not found, please, try again.'
@@ -155,7 +155,14 @@ Please, try again.'''.format(typ_)
 		
 		# Return when Bot Information intent is triggered.
 		def bot_info():
-			return 'docs'
+			return """I'm your university assistant =)
+You can ask me about your current courses and exams.
+
+Add course:
+/newcourse <Full name>, <Date(dd/mm/yyyy)>, <Time>
+
+Add exam:
+/newexam <Full name>, <Date(dd/mm/yyyy)>, <Time>"""
 
 		return {
 			# Welcome intent handler.

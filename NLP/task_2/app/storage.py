@@ -1,16 +1,19 @@
+import os
 import json
 
+from app.settings import BASE_DIR
 
-# Dict-based in-memory storage.
+
+# Dict-based storage.
 class Storage:
 	
 	def __init__(self):
-		self.storage = {}
+		self.storage = self._load()
 	
 	def _find(self, typ_, user_id, course_name):
-		if user_id not in self.storage:
+		if str(user_id) not in self.storage:
 			return None
-		data = self.storage[user_id][typ_]
+		data = self.storage[str(user_id)][typ_]
 		for item in data:
 			current = set(item['name'].lower().split())
 			passed = set(course_name.lower().split())
@@ -18,14 +21,28 @@ class Storage:
 				return item
 		return None
 	
+	@staticmethod
+	def _load():
+		file_path = '{}/storage.json'.format(BASE_DIR)
+		if os.path.exists(file_path):
+			with open(file_path, 'r') as fp:
+				return json.load(fp)
+		else:
+			return {}
+	
+	def _save(self):
+		with open('{}/storage.json'.format(BASE_DIR), 'w') as fp:
+			json.dump(self.storage, fp)
+	
 	def add_user(self, user_id):
-		self.storage[user_id] = {
+		self.storage[str(user_id)] = {
 			'exams': [],
 			'credits': []
 		}
+		self._save()
 	
 	def has_user(self, user_id):
-		return user_id in self.storage
+		return str(user_id) in self.storage
 	
 	def has_exam(self, user_id, exam_info):
 		return self._find('exams', user_id, exam_info[0].strip().lower()) is not None
@@ -34,18 +51,20 @@ class Storage:
 		return self._find('credits', user_id, credit_info[0].strip().lower()) is not None
 	
 	def add_credit(self, user_id, new_credit):
-		self.storage[user_id]['credits'].append({
+		self.storage[str(user_id)]['credits'].append({
 			'name': new_credit[0].strip(),
 			'date': new_credit[1].strip(),
 			'time': new_credit[2].strip()
 		})
+		self._save()
 	
 	def add_exam(self, user_id, new_exam):
-		self.storage[user_id]['exams'].append({
+		self.storage[str(user_id)]['exams'].append({
 			'name': new_exam[0].strip(),
 			'date': new_exam[1].strip(),
 			'time': new_exam[2].strip()
 		})
+		self._save()
 	
 	def get_exam_info(self, user_id, exam_name):
 		exam = self._find('exams', user_id, exam_name.strip().lower())
@@ -69,12 +88,12 @@ class Storage:
 
 	def get_exams(self, user_id):
 		return '\n'.join(['{}) {}'.format(idx + 1, x['name']) for idx, x in enumerate(
-			self.storage[user_id]['exams']
+			self.storage[str(user_id)]['exams']
 		)])
 	
 	def get_courses(self, user_id):
-		exams = self.storage[user_id]['exams']
-		credits_ = self.storage[user_id]['credits']
+		exams = self.storage[str(user_id)]['exams']
+		credits_ = self.storage[str(user_id)]['credits']
 		return '\n'.join(['{}) {}'.format(idx + 1, x['name']) for idx, x in enumerate(credits_ + exams)])
 	
 	def print(self):

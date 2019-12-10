@@ -1,3 +1,5 @@
+import random
+
 from luis_sdk import LUISClient
 
 
@@ -32,15 +34,37 @@ class LUISAgent:
 	
 	@staticmethod
 	def welcome_response():
-		return 'Hi there'
+		return random.choice([
+			'Hi! How are you doing?',
+			'Hello! How can I help you?',
+			'Good day! What can I do for you today?',
+			'Greetings! How can I assist?'
+		])
 	
 	@staticmethod
 	def fallback_response():
-		return 'What was that?'
+		return random.choice([
+			'I didn\'t get that. Can you say it again?',
+			'I missed what you said. What was that?',
+			'Sorry, could you say that again?',
+			'Sorry, can you say that again?',
+			'Can you say that again?',
+			'Sorry, I didn\'t get that. Can you rephrase?',
+			'Sorry, what was that?',
+			'One more time?',
+			'What was that?',
+			'Say that one more time?',
+			'I didn\'t get that. Can you repeat?',
+			'I missed that, say that again?'
+		])
 	
 	@staticmethod
 	def gratitude_response():
-		return 'You are welcome!'
+		return random.choice([
+			'You are welcome!',
+			'Happy to help',
+			'You got it'
+		])
 
 
 if __name__ == '__main__':
@@ -48,4 +72,4 @@ if __name__ == '__main__':
 	from pprint import pprint
 	
 	agent = LUISAgent(LUIS_APP_ID, LUIS_APP_KEY)
-	pprint(agent.analyze('Hello!'))
+	pprint(agent.analyze('my exams'))

@@ -1,3 +1,9 @@
+import os
+
+# Common
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 # Telegram bot API settings.
 
 # Bot token received from BotFather.
